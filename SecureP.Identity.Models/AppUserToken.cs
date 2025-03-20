@@ -7,6 +7,5 @@ public class AppUserToken<TKey> : IdentityUserToken<TKey> where TKey : IEquatabl
 {
     public virtual DateTime ExpiryDate { get; set; }
 
-    [NotMapped]
-    public AppUser<TKey> User { get; set; } = default!;
+    public virtual AppUser<TKey> User { get; set; } = default!;
 }

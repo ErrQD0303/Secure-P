@@ -7,7 +7,7 @@ using SecureP.Shared;
 namespace Secure_P_Backend.Data;
 
 public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<TKey>, TKey, IdentityUserClaim<TKey>,
-    IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, IdentityUserToken<TKey>>
+    IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, AppUserToken<TKey>>
     where TKey : IEquatable<TKey>
 {
     public AppDbContext(DbContextOptions<AppDbContext<TKey>> options) : base(options)
@@ -18,5 +18,14 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.HasDefaultSchema(AppConstants.IdentityEntityFrameworkCore.DefaultSchema);
+
+        modelBuilder.Entity<AppUserToken<TKey>>(entity =>
+        {
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.UserTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+        });
     }
 }

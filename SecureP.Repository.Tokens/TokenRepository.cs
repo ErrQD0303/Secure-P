@@ -5,7 +5,7 @@ using SecureP.Shared;
 
 namespace SecureP.Repository.Tokens;
 
-public class TokenRepository<TKey> : ITokenRepository where TKey : IEquatable<TKey>
+public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquatable<TKey>
 {
     private readonly UserManager<AppUser<TKey>> _userManager;
 
@@ -14,9 +14,9 @@ public class TokenRepository<TKey> : ITokenRepository where TKey : IEquatable<TK
         _userManager = userManager;
     }
 
-    public async Task<bool> AddTokenAsync(string token, string userId, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
+    public async Task<bool> AddTokenAsync(string token, TKey userId, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
         if (user is null)
         {
             return false;
@@ -49,9 +49,9 @@ public class TokenRepository<TKey> : ITokenRepository where TKey : IEquatable<TK
         return result.Succeeded;
     }
 
-    public async Task<bool> RemoveTokenAsync(string token, string userId, TokenType tokenType, string loginProvider)
+    public async Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
     {
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
         if (user is null)
         {
             return false;
@@ -72,14 +72,14 @@ public class TokenRepository<TKey> : ITokenRepository where TKey : IEquatable<TK
         return result.Succeeded;
     }
 
-    public async Task<bool> ValidateTokenAsync(string token, string userId, TokenType tokenType, string loginProvider)
+    public async Task<bool> ValidateTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
             return false;
         }
 
-        var user = await _userManager.FindByIdAsync(userId);
+        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
         if (user is null)
         {
             return false;

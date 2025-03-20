@@ -1,4 +1,8 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Secure_P_Backend.Models;
+using SecureP.Service.Abstraction;
+using SecureP.Service.Abstraction.Entities;
 
 namespace Secure_P_Backend.Controllers;
 
@@ -6,7 +10,7 @@ namespace Secure_P_Backend.Controllers;
 [Route("api/[controller]")]
 public class TokenControllers : ControllerBase
 {
-    /* private readonly ITokenService _tokenService;
+    private readonly ITokenService _tokenService;
     private readonly ILogger<TokenControllers> _logger;
 
     public TokenControllers(ITokenService tokenService, ILogger<TokenControllers> logger)
@@ -15,17 +19,34 @@ public class TokenControllers : ControllerBase
         _logger = logger;
     }
 
-    [HttpPost("generate")]
-    public IActionResult GenerateToken([FromBody] TokenRequest tokenRequest)
+    [HttpPost("token")]
+    public async Task<IActionResult> GenerateToken([FromBody] TokenRequest tokenRequest)
     {
-        var token = _tokenService.GenerateToken(tokenRequest);
-        return Ok(token);
+        var response = await GenerateTokenResponseAsync(tokenRequest);
+
+        return Ok(response);
     }
 
-    [HttpPost("validate")]
-    public IActionResult ValidateToken([FromBody] TokenRequest tokenRequest)
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
-        var isValid = _tokenService.ValidateToken(tokenRequest);
-        return Ok(isValid);
-    } */
+        if (!await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest))
+        {
+            return BadRequest("Invalid Refresh Token");
+        }
+
+        var response = await GenerateTokenResponseAsync(refreshTokenRequest);
+
+        return Ok(response);
+    }
+
+    private async Task<TokenResponse> GenerateTokenResponseAsync(TokenRequest tokenRequest)
+    {
+        return new TokenResponse
+        {
+            AccessToken = await _tokenService.GenerateAccessTokenAsync(tokenRequest),
+            RefreshToken = await _tokenService.GenerateRefreshTokenAsync(tokenRequest),
+            TokenType = "Bearer"
+        };
+    }
 }

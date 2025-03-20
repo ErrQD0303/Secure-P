@@ -9,7 +9,8 @@ public static class TokenServiceExtensions
     public static IServiceCollection AddTokenService<TKey>(this IServiceCollection services) where TKey : IEquatable<TKey>
     {
         services.AddTokenRepository<TKey>();
-        services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<ITokenService, TokenService<TKey>>();
+        services.AddSingleton<JwtGenerator>();
 
         return services;
     }

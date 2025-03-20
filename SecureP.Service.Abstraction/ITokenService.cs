@@ -4,8 +4,8 @@ namespace SecureP.Service.Abstraction;
 
 public interface ITokenService
 {
-    string GenerateAccessToken(TokenRequest tokenRequest);
-    string GenerateRefreshToken(RefreshTokenRequest tokenRequest);
-    bool ValidateAccessToken(string accessToken);  // Validate the actual token
-    bool ValidateRefreshToken(string refreshToken);  // Validate the actual token
+    Task<string> GenerateAccessTokenAsync(TokenRequest tokenRequest);
+    Task<string> GenerateRefreshTokenAsync(TokenRequest tokenRequest);
+    Task<bool> ValidateAccessTokenAsync(string accessToken, string username);  // Validate the actual token
+    Task<bool> ValidateRefreshTokenAsync(RefreshTokenRequest request);  // Validate the actual token
 }
