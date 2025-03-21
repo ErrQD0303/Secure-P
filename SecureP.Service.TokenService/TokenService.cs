@@ -4,12 +4,15 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SecureP.Identity.Models;
 using SecureP.Repository.Abstraction;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Service.Abstraction.Exceptions;
 using SecureP.Shared;
+using SecureP.Shared.Configures;
 
 namespace SecureP.Service.TokenService;
 
@@ -19,13 +22,15 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
     private readonly ILogger<TokenService<TKey>> _logger;
     private readonly UserManager<AppUser<TKey>> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly JwtConfigures _jwtConfigures;
 
-    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration)
+    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration, IOptions<JwtConfigures> jwtConfigures)
     {
         _tokenRepository = tokenRepository;
         _logger = logger;
         _userManager = userManager;
         _configuration = configuration;
+        _jwtConfigures = jwtConfigures.Value;
     }
 
     public async Task<string> GenerateAccessTokenAsync(TokenRequest tokenRequest)
@@ -56,8 +61,6 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
             return string.Empty;
         }
 
-        var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
-
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()!),
@@ -65,7 +68,7 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
             new(ClaimTypes.Email, user.Email!)
         };
 
-        var accessToken = JwtGenerator.GenerateJWTToken(_configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt Issuer is missing"), _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt Audience is missing"), null, int.Parse(_configuration["Jwt:ExpirySeconds"] ?? throw new InvalidOperationException("Jwt ExpirySeconds is missing")), claims, jsonWebKey);
+        var accessToken = JwtGenerator.GenerateJWTToken(_configuration["Jwt:Authority"] ?? throw new InvalidOperationException("Jwt Authority is missing"), _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt Audience is missing"), null, int.Parse(_configuration["Jwt:ExpirySeconds"] ?? throw new InvalidOperationException("Jwt ExpirySeconds is missing")), claims, jsonWebKey);
 
         await AddUserTokenAsync(tokenRequest!, accessToken, TokenType.AccessToken);
 
@@ -85,11 +88,18 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
 
     private async Task AddUserTokenAsync(TokenRequest tokenRequest, string refreshToken, TokenType tokenType)
     {
-        var loginProviderInfo = (await _userManager.GetLoginsAsync(new AppUser<TKey> { UserName = tokenRequest?.Username?.ToString() })).FirstOrDefault();
+        var userLoginProviderInfo = (await _userManager.GetLoginsAsync(new AppUser<TKey> { UserName = tokenRequest?.Username?.ToString() })).FirstOrDefault();
 
-        var user = tokenRequest?.Email != null ? await _userManager.FindByEmailAsync(tokenRequest.Email) : await _userManager.FindByNameAsync(tokenRequest?.Username?.ToString() ?? string.Empty);
+        var user = (tokenRequest?.Email != null ? await _userManager.FindByEmailAsync(tokenRequest.Email) : await _userManager.FindByNameAsync(tokenRequest?.Username?.ToString() ?? string.Empty)) ?? throw new TokenServiceException(string.Format("User {0} not found", tokenRequest?.Username?.ToString() ?? tokenRequest?.Email ?? string.Empty));
 
-        await _tokenRepository.AddTokenAsync(refreshToken, user!.Id, tokenType, DateTime.UtcNow.AddDays(7), loginProviderInfo != null ? loginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        var expiryDate = tokenType switch
+        {
+            TokenType.AccessToken => DateTime.UtcNow.AddSeconds(_jwtConfigures.ExpirySeconds),
+            TokenType.RefreshToken => DateTime.UtcNow.AddDays(_jwtConfigures.RefreshExpirySeconds),
+            _ => throw new TokenServiceException("Invalid Token Type")
+        };
+
+        await _tokenRepository.AddTokenAsync(refreshToken, user!.Id, tokenType, DateTime.UtcNow.AddDays(7), userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
     }
 
     public async Task<bool> ValidateAccessTokenAsync(string accessToken, string username)
@@ -120,7 +130,7 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
         }
         else
         {
-            user = await _userManager.FindByNameAsync(request.Username.ToString());
+            user = await _userManager.FindByNameAsync(request?.Username?.ToString() ?? string.Empty);
         }
 
         if (user == null)
@@ -130,7 +140,7 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
 
         var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
 
-        return await _tokenRepository.ValidateTokenAsync(request.RefreshToken, user.Id, TokenType.RefreshToken, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        return await _tokenRepository.ValidateTokenAsync(request?.RefreshToken!, user.Id, TokenType.RefreshToken, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
     }
 
     private static readonly Random random = new();

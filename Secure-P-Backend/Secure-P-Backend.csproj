@@ -26,6 +26,7 @@
     <ProjectReference Include="..\SecureP.Identity.Models\SecureP.Identity.Models.csproj" />
     <ProjectReference Include="..\SecureP.Shared\SecureP.Shared.csproj" />
     <ProjectReference Include="..\SecureP.Service.TokenService\SecureP.Service.TokenService.csproj" />
+    <ProjectReference Include="..\SecureP.Service.UserService\SecureP.Service.UserService.csproj" />
   </ItemGroup>
 
 </Project>

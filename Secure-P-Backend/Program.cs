@@ -1,5 +1,14 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using NSwag;
+using NSwag.Generation.Processors.Security;
+using Secure_P_Backend.CORS.Extensions;
 using SecureP.Identity.Models;
 using SecureP.Service.TokenService.Extensions;
+using SecureP.Shared.Configures;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers(); // Add support for API controllers
+builder.Services.AddControllers();
+/* .AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+}); */
 
 builder.Services.AddOpenApiDocument(options =>
 {
@@ -15,7 +28,42 @@ builder.Services.AddOpenApiDocument(options =>
     options.Version = "v1";
     options.Description = "Secure-P Backend API";
     options.DocumentName = "v1";
+
+    options.AddSecurity("JWT", new NSwag.OpenApiSecurityScheme
+    {
+        Type = OpenApiSecuritySchemeType.ApiKey,
+        Name = Microsoft.Net.Http.Headers.HeaderNames.Authorization,
+        In = OpenApiSecurityApiKeyLocation.Header,
+        Description = "Type into the textbox: Bearer {your JWT token}.",
+        BearerFormat = "JWT",
+        Scheme = "bearer",
+    });
+
+    options.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
 });
+
+builder.Services.Configure<JwtConfigures>(builder.Configuration.GetSection("Jwt")); // Configure JWT settings
+var jwtConfigures = builder.Configuration.GetSection("Jwt").Get<JwtConfigures>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        /* options.Authority = jwtConfigures?.Authority ?? throw new InvalidOperationException("Authority is missing");
+        options.Audience = jwtConfigures?.Audience ?? throw new InvalidOperationException("Audience is missing"); */
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtConfigures?.Authority ?? throw new InvalidOperationException("Authority is missing"),
+            ValidAudience = jwtConfigures?.Audience ?? throw new InvalidOperationException("Audience is missing"),
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256, SecurityAlgorithms.RsaSha256],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfigures?.Key ?? throw new InvalidOperationException("Key is missing"))),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
 
 var app = builder.Build();
 
@@ -33,6 +81,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCORS();
 
 app.UseRouting(); // Add routing middleware
 

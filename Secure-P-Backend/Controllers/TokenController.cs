@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Secure_P_Backend.Models;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 
@@ -8,12 +7,12 @@ namespace Secure_P_Backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TokenControllers : ControllerBase
+public class TokenController : ControllerBase
 {
     private readonly ITokenService _tokenService;
-    private readonly ILogger<TokenControllers> _logger;
+    private readonly ILogger<TokenController> _logger;
 
-    public TokenControllers(ITokenService tokenService, ILogger<TokenControllers> logger)
+    public TokenController(ITokenService tokenService, ILogger<TokenController> logger)
     {
         _tokenService = tokenService;
         _logger = logger;
@@ -22,6 +21,7 @@ public class TokenControllers : ControllerBase
     [HttpPost("token")]
     public async Task<IActionResult> GenerateToken([FromBody] TokenRequest tokenRequest)
     {
+        _logger.LogInformation($"Generating Tokens for user {tokenRequest.Email ?? tokenRequest.Username}");
         var response = await GenerateTokenResponseAsync(tokenRequest);
 
         return Ok(response);
@@ -30,6 +30,7 @@ public class TokenControllers : ControllerBase
     [HttpPost("refresh")]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
+        _logger.LogInformation($"Refreshing Tokens for tokens {refreshTokenRequest.RefreshToken}");
         if (!await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest))
         {
             return BadRequest("Invalid Refresh Token");

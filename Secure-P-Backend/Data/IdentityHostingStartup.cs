@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SecureP.Identity.Models;
 using SecureP.Service.TokenService.Extensions;
+using SecureP.Service.UserService.Extensions;
 
 [assembly: HostingStartup(typeof(Secure_P_Backend.Data.IdentityHostingStartup))]
 namespace Secure_P_Backend.Data;
@@ -21,6 +22,7 @@ public class IdentityHostingStartup : IHostingStartup
                 .AddDefaultTokenProviders();
 
             services.AddTokenService<string>(); // Add token service
+            services.AddUserService<string>(); // Add user service
         });
     }
 }

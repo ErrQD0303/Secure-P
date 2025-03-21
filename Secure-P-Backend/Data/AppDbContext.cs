@@ -13,6 +13,8 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
     public AppDbContext(DbContextOptions<AppDbContext<TKey>> options) : base(options)
     { }
 
+    public DbSet<AppUserLicensePlate<TKey>> UserLicensePlates { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -23,6 +25,17 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
         {
             entity.HasOne(d => d.User)
                 .WithMany(p => p.UserTokens)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<AppUserLicensePlate<TKey>>(entity =>
+        {
+            entity.HasKey(e => new { e.UserId, e.LicensePlateNumber });
+
+            entity.HasOne(d => d.User)
+                .WithMany(p => p.UserLicensePlates)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired();

@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Repository.Abstraction;
 using SecureP.Shared;
+using SecureP.Shared.Configures;
 
 namespace SecureP.Repository.Tokens;
 
@@ -16,7 +19,11 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
 
     public async Task<bool> AddTokenAsync(string token, TKey userId, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
+        var user = await _userManager.Users
+            .Where(u => u.Id.Equals(userId))
+            .Include(u => u.UserTokens)
+            .FirstOrDefaultAsync();
+
         if (user is null)
         {
             return false;
@@ -51,7 +58,11 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
 
     public async Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
+        var user = await _userManager.Users
+            .Where(u => u.Id.Equals(userId))
+            .Include(u => u.UserTokens)
+            .FirstOrDefaultAsync();
+
         if (user is null)
         {
             return false;
@@ -79,7 +90,11 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
             return false;
         }
 
-        var user = await _userManager.FindByIdAsync(userId.ToString() ?? string.Empty);
+        var user = await _userManager.Users
+            .Where(u => u.Id.Equals(userId))
+            .Include(u => u.UserTokens)
+            .FirstOrDefaultAsync();
+
         if (user is null)
         {
             return false;
@@ -97,7 +112,7 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
         if (existingToken.ExpiryDate < DateTime.UtcNow)
         {
             user.UserTokens.Remove(existingToken);
-            var result = await _userManager.UpdateAsync(user);
+            await _userManager.UpdateAsync(user);
 
             return false;
         }
