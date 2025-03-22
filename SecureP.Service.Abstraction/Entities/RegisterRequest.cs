@@ -23,7 +23,7 @@ public class RegisterRequest
     [JsonPropertyName("country")]
     public required string Country { get; set; }
     [JsonPropertyName("day_of_birth")]
-    public required string DayOfBirth { get; set; }
+    public required DateTime DayOfBirth { get; set; }
     [JsonPropertyName("post_code")]
     public required string PostCode { get; set; }
     [JsonPropertyName("license_plates")]

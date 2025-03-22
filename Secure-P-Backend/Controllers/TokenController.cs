@@ -6,7 +6,7 @@ using SecureP.Service.Abstraction.Entities;
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class TokenController : ControllerBase
 {
     private readonly ITokenService _tokenService;

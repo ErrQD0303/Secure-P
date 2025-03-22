@@ -5,7 +5,7 @@ namespace SecureP.Identity.Models;
 public class AppUser<TKey> : IdentityUser<TKey> where TKey : IEquatable<TKey>
 {
     public virtual string FullName { get; set; } = default!;
-    public virtual string DayOfBirth { get; set; } = default!;
+    public virtual DateTime DayOfBirth { get; set; } = default!;
     public virtual string Country { get; set; } = default!;
     public virtual string City { get; set; } = default!;
     public virtual string AddressLine1 { get; set; } = default!;

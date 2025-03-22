@@ -1,13 +1,16 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NSwag;
 using NSwag.Generation.Processors.Security;
 using Secure_P_Backend.CORS.Extensions;
+using Secure_P_Backend.Helpers.Extensions;
 using SecureP.Identity.Models;
 using SecureP.Service.TokenService.Extensions;
+using SecureP.Shared;
 using SecureP.Shared.Configures;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,7 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers();
+builder.Services.AddControllers(o =>
+{
+    o.UseRoutePrefix(AppConstants.DefaultRoutePrefix);
+});
 /* .AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
@@ -91,6 +97,6 @@ app.UseAuthorization(); // Add authorization middleware
 
 // app.MapIdentityApi<AppUser<string>>(); // Map identity API routes
 
-app.MapControllers(); // Map controller routes
+app.MapControllers(); // Map controllers with group name "api"
 
 app.Run();

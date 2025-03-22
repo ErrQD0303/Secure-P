@@ -12,7 +12,7 @@ using SecureP.Shared.Configures;
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 [Authorize]
 public class IdentityController : ControllerBase
 {
@@ -93,9 +93,45 @@ public class IdentityController : ControllerBase
 
         if (!loginResult)
         {
-            return BadRequest("Login failed");
+            return Unauthorized(new LoginResponse
+            {
+                StatusCode = 401,
+                Success = "false",
+                Message = "Login failed, Invalid email or password!",
+                Errors = new Dictionary<string, string>
+                {
+                    { "summary", "Invalid email or password!" },
+                }
+            });
         }
 
+        await SetAccessCookies(requestData, user);
+
+        return Ok(new LoginResponse
+        {
+            StatusCode = 200,
+            Success = "true",
+            Message = "Login successful!",
+            User = new LoginResponseAppUser<string>
+            {
+                Id = user?.Id!,
+                Username = user?.UserName!,
+                Email = user?.Email!,
+                PhoneNumber = user?.PhoneNumber!,
+                FullName = user?.FullName!,
+                DayOfBirth = user!.DayOfBirth!,
+                Country = user.Country,
+                City = user.City,
+                AddressLine1 = user.AddressLine1,
+                AddressLine2 = user.AddressLine2,
+                PostCode = user.PostCode,
+                UserLicensePlates = user.UserLicensePlates
+            }
+        });
+    }
+
+    private async Task SetAccessCookies(dynamic? requestData, AppUser<string>? user)
+    {
         Response.Cookies.Append("access_token", await _tokenService.GenerateAccessTokenAsync(new TokenRequest
         {
             Email = user?.Email ?? string.Empty,
@@ -123,8 +159,6 @@ public class IdentityController : ControllerBase
             Path = "/",
             Domain = "localhost"
         });
-
-        return Ok();
     }
 
     [HttpGet("get-user/{id}")]
