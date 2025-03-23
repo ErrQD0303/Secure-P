@@ -10,4 +10,26 @@ public static class AppConstants
     {
         public readonly string DefaultSchema = "Identity";
     }
+    public class SupportEmailType
+    {
+        public const string Default = "Normal";
+        public const string OTP = "OTP";
+    }
+    public class AppEmail
+    {
+        public class OTPAppEmail
+        {
+            public const string Subject = "SecureP - OTP Verification";
+            public const string Message = "Your OTP code is: ";
+            public const string HTTPMessage = "Your OTP code is: <b>{0}</b>";
+            public static string GetMessage(string otp) => string.Format(Message, otp);
+            public static string GetHTTPMessage(string otp) => string.Format(HTTPMessage, otp);
+        }
+    }
+
+    public class OTPConstant
+    {
+        public static int ExpiryMinute => 10;
+        public static string TemporaryCookieName => "SecureP-OTP-Email";
+    }
 }

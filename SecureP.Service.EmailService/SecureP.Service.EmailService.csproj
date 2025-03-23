@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SecureP.Identity.Models\SecureP.Identity.Models.csproj" />
     <ProjectReference Include="..\SecureP.Service.Abstraction\SecureP.Service.Abstraction.csproj" />
+    <ProjectReference Include="..\SecureP.EmailSender\SecureP.EmailSender.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

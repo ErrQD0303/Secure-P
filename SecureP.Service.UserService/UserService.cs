@@ -120,4 +120,14 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
         return user;
     }
+
+    public Task<AppUser<TKey>?> GetUserByEmailAsync(string email)
+    {
+        return _userManager.FindByEmailAsync(email);
+    }
+
+    public Task<AppUser<TKey>?> GetUserByNameAsync(string username)
+    {
+        return _userManager.FindByNameAsync(username);
+    }
 }

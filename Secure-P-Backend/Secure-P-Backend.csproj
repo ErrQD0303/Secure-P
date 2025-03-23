@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Secure_P_Backend</RootNamespace>
+    <UserSecretsId>de0c1b7a-95c1-4ce7-8aff-0d09139701a1</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
     <ProjectReference Include="..\SecureP.Shared\SecureP.Shared.csproj" />
     <ProjectReference Include="..\SecureP.Service.TokenService\SecureP.Service.TokenService.csproj" />
     <ProjectReference Include="..\SecureP.Service.UserService\SecureP.Service.UserService.csproj" />
+    <ProjectReference Include="..\SecureP.Service.EmailService\SecureP.Service.EmailService.csproj" />
   </ItemGroup>
 
 </Project>

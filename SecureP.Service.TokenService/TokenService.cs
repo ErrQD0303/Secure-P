@@ -151,4 +151,38 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
 
         return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()]);
     }
+
+    public async Task<string> GenerateOTPAsync(string email)
+    {
+        _logger.LogInformation("Generating OTP");
+
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user is null)
+        {
+            throw new TokenServiceException($"User with email {email} not found");
+        }
+
+        var otp = new Random().Next(100000, 999999).ToString();
+
+        await _tokenRepository.AddTokenAsync(otp, user.Id, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute), AppConstants.DefaultLoginProvider);
+
+        return otp;
+    }
+
+    public async Task<bool> ValidateOTPAsync(string email, string otp)
+    {
+        _logger.LogInformation("Validating OTP");
+
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
+
+        return await _tokenRepository.ValidateTokenAsync(otp, user.Id, TokenType.OTP, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+    }
 }

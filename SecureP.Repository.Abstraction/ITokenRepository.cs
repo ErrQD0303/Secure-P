@@ -10,5 +10,6 @@ public interface ITokenRepository<TKey> where TKey : IEquatable<TKey>
 public enum TokenType
 {
     AccessToken,
-    RefreshToken
+    RefreshToken,
+    OTP
 }

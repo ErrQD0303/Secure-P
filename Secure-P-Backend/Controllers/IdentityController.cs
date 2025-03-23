@@ -1,13 +1,17 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
+using SecureP.Identity.Models.Dto;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.UserService;
+using SecureP.Shared;
 using SecureP.Shared.Configures;
+using SecureP.Shared.Mappers;
 
 namespace Secure_P_Backend.Controllers;
 
@@ -20,13 +24,15 @@ public class IdentityController : ControllerBase
     private readonly IUserService<string> _userService;
     private readonly ITokenService _tokenService;
     private readonly JwtConfigures _jwtConfigures;
+    private readonly IEmailService _emailService;
 
-    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService tokenService, IOptions<JwtConfigures> jwtConfigures)
+    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService tokenService, IOptions<JwtConfigures> jwtConfigures, IEmailService emailService)
     {
         _logger = logger;
         _userService = userService;
         _tokenService = tokenService;
         _jwtConfigures = jwtConfigures.Value;
+        _emailService = emailService;
     }
 
     [AllowAnonymous]
@@ -38,29 +44,55 @@ public class IdentityController : ControllerBase
 
         if (user == null)
         {
-            return BadRequest("Register failed");
+            return BadRequest(new UserRegisterResponse<string>
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UserRegisterResponses.UserRegistrationFailed,
+                Errors = AppResponseErrors.UserRegisterErrors.UserRegistrationFailed
+            });
         }
 
-        var userDto = new
+        var userDto = new UserRegisterResponse<string>
         {
-            user.Id,
-            user.UserName,
-            user.Email,
-            user.PhoneNumber,
-            user.FullName,
-            user.DayOfBirth,
-            user.Country,
-            user.City,
-            user.AddressLine1,
-            user.AddressLine2,
-            user.PostCode,
-            LicensePlates = user.UserLicensePlates.Select(lp => new
-            {
-                lp.LicensePlateNumber
-            })
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.GetUserInfoResponses.UserFound,
+            User = user.ToUserRegisterResponseAppUser()
         };
 
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, userDto);
+        return CreatedAtAction(nameof(GetUserInfo), new { id = user.Id }, userDto);
+    }
+
+    [HttpGet("user/getInfo")]
+    public async Task<IActionResult> GetUserInfo()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId == null)
+        {
+            return BadRequest("User not found");
+        }
+
+        var user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound(new GetUserInfoResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.GetUserInfoResponses.UserNotFound,
+            });
+        }
+
+        return Ok(new GetUserInfoResponse<string>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.GetUserInfoResponses.UserFound,
+            User = user.ToGetUserInfoResponseAppUser()
+        });
     }
 
     [AllowAnonymous]
@@ -91,42 +123,87 @@ public class IdentityController : ControllerBase
             _ => (false, null)
         };
 
+        _logger.LogInformation($"User: {user?.Email ?? user?.UserName ?? user?.PhoneNumber ?? string.Empty} logged in.");
+
         if (!loginResult)
         {
-            return Unauthorized(new LoginResponse
+            return Unauthorized(new LoginResponse<string>
             {
-                StatusCode = 401,
+                StatusCode = StatusCodes.Status401Unauthorized,
                 Success = "false",
-                Message = "Login failed, Invalid email or password!",
-                Errors = new Dictionary<string, string>
-                {
-                    { "summary", "Invalid email or password!" },
-                }
+                Message = AppResponses.UserLoginResponses.UserLoginFailed,
+                Errors = AppResponseErrors.UserLoginErrors.UserLoginFailed
             });
         }
 
-        await SetAccessCookies(requestData, user);
-
-        return Ok(new LoginResponse
+        if (!string.IsNullOrWhiteSpace(user?.Email))
         {
-            StatusCode = 200,
-            Success = "true",
-            Message = "Login successful!",
-            User = new LoginResponseAppUser<string>
+            Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email, new CookieOptions
             {
-                Id = user?.Id!,
-                Username = user?.UserName!,
-                Email = user?.Email!,
-                PhoneNumber = user?.PhoneNumber!,
-                FullName = user?.FullName!,
-                DayOfBirth = user!.DayOfBirth!,
-                Country = user.Country,
-                City = user.City,
-                AddressLine1 = user.AddressLine1,
-                AddressLine2 = user.AddressLine2,
-                PostCode = user.PostCode,
-                UserLicensePlates = user.UserLicensePlates
-            }
+                HttpOnly = false,
+                Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+                SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+                Expires = DateTime.UtcNow.AddMinutes(AppConstants.OTPConstant.ExpiryMinute),
+                Path = "/",
+                Domain = "localhost" // Ensure this matches the domain used when setting the cookie
+            });
+
+            var otp = await _tokenService.GenerateOTPAsync(user.Email);
+
+            _emailService.SendOTPEmailAsync(user.Email, otp);
+        }
+
+        return Ok(new LoginResponse<string>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.UserLoginResponses.UserLoggedInWaitForOTP,
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost("user/otp-login")]
+    public async Task<IActionResult> OTPLogin([FromBody] OTPLoginRequest request)
+    {
+        if (!await _tokenService.ValidateOTPAsync(request.Email, request.OTP))
+        {
+            return Unauthorized(new LoginResponse<string>
+            {
+                StatusCode = StatusCodes.Status401Unauthorized,
+                Success = "false",
+                Message = AppResponses.UserLoginResponses.UserLoginFailed,
+            });
+        }
+
+        var user = await _userService.GetUserByEmailAsync(request.Email);
+        if (user == null)
+        {
+            return NotFound(new LoginResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.GetUserInfoResponses.UserNotFound,
+            });
+        }
+
+        Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email!, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+            SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+            Expires = DateTime.UtcNow,
+            Path = "/",
+            Domain = "localhost" // Ensure this matches the domain used when setting the cookie
+        });
+
+        await SetAccessCookies(request, user);
+
+        return Ok(new LoginResponse<string>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.UserLoginResponses.UserLoggedIn,
+            User = user.ToLoginResponseAppUser()
         });
     }
 
@@ -135,10 +212,9 @@ public class IdentityController : ControllerBase
         Response.Cookies.Append("access_token", await _tokenService.GenerateAccessTokenAsync(new TokenRequest
         {
             Email = user?.Email ?? string.Empty,
-            Password = requestData?.password ?? string.Empty,
         }), new CookieOptions
         {
-            HttpOnly = true,
+            HttpOnly = false,
             Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(_jwtConfigures.ExpirySeconds),
@@ -149,10 +225,9 @@ public class IdentityController : ControllerBase
         Response.Cookies.Append("refresh_token", await _tokenService.GenerateRefreshTokenAsync(new TokenRequest
         {
             Email = user?.Email ?? string.Empty,
-            Password = requestData?.password ?? string.Empty,
         }), new CookieOptions
         {
-            HttpOnly = true,
+            HttpOnly = false,
             Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(_jwtConfigures.RefreshExpirySeconds),
@@ -162,6 +237,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpGet("get-user/{id}")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUser([FromRoute] string id)
     {
         var user = await _userService.GetUserByIdAsync(id);
@@ -171,74 +247,15 @@ public class IdentityController : ControllerBase
             return NotFound();
         }
 
-        var returnedUser = new
-        {
-            user.Id,
-            user.UserName,
-            user.Email,
-            user.EmailConfirmed,
-            user.PhoneNumber,
-            user.PhoneNumberConfirmed,
-            user.DayOfBirth,
-            user.Country,
-            user.City,
-            user.AddressLine1,
-            user.AddressLine2,
-            user.FullName,
-            user.TwoFactorEnabled,
-            user.LockoutEnabled,
-            user.LockoutEnd,
-            UserTokens = user.UserTokens.Select(t => new
-            {
-                t.LoginProvider,
-                t.Name,
-                t.Value,
-                t.ExpiryDate
-            }),
-            LicensePlates = user.UserLicensePlates.Select(lp => new
-            {
-                lp.LicensePlateNumber,
-            }),
-            user.AccessFailedCount,
-        };
-
-        return Ok(returnedUser);
+        return Ok(user.ToGetUserDto());
     }
 
     [HttpGet("get-users")]
+    // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUsers()
     {
         var users = (await _userService.GetUsersAsync())
-            .Select(u => new
-            {
-                u.Id,
-                u.UserName,
-                u.Email,
-                u.EmailConfirmed,
-                u.PhoneNumber,
-                u.PhoneNumberConfirmed,
-                u.DayOfBirth,
-                u.Country,
-                u.City,
-                u.AddressLine1,
-                u.AddressLine2,
-                u.FullName,
-                u.TwoFactorEnabled,
-                u.LockoutEnabled,
-                u.LockoutEnd,
-                UserTokens = u.UserTokens.Select(t => new
-                {
-                    t.LoginProvider,
-                    t.Name,
-                    t.Value,
-                    t.ExpiryDate
-                }),
-                LicensePlates = u.UserLicensePlates.Select(lp => new
-                {
-                    lp.LicensePlateNumber,
-                }),
-                u.AccessFailedCount,
-            });
+            .Select(u => u.ToGetUserDto());
 
         return Ok(users);
     }

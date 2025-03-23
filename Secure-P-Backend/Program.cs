@@ -9,6 +9,7 @@ using NSwag.Generation.Processors.Security;
 using Secure_P_Backend.CORS.Extensions;
 using Secure_P_Backend.Helpers.Extensions;
 using SecureP.Identity.Models;
+using SecureP.Service.EmailService.Extensions;
 using SecureP.Service.TokenService.Extensions;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
@@ -27,6 +28,8 @@ builder.Services.AddControllers(o =>
 {
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
 }); */
+
+builder.Services.AddEmailService(builder.Configuration);
 
 builder.Services.AddOpenApiDocument(options =>
 {
