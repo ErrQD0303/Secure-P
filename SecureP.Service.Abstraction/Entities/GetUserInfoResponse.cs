@@ -9,7 +9,6 @@ public class GetUserInfoResponse<TKey> where TKey : IEquatable<TKey>
     public string Message { get; set; } = default!;
     public Dictionary<string, string> Errors { get; set; } = default!;
     public GetUserInfoResponseAppUser<TKey> User { get; set; } = default!;
-
 }
 public class GetUserInfoResponseAppUser<TKey> where TKey : IEquatable<TKey>
 {

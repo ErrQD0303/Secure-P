@@ -111,13 +111,18 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
 
         if (existingToken.ExpiryDate < DateTime.UtcNow)
         {
-            user.UserTokens.Remove(existingToken);
-            await _userManager.UpdateAsync(user);
-
+            await RemoveUserTokenAsync(user, existingToken, _userManager);
             return false;
         }
 
+        await RemoveUserTokenAsync(user, existingToken, _userManager);
         return true;
+    }
+
+    private static async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken, UserManager<AppUser<TKey>> userManager)
+    {
+        user.UserTokens.Remove(existingToken);
+        await userManager.UpdateAsync(user);
     }
 
     private static AppUserToken<TKey>? GetToken(AppUser<TKey> user, TokenType tokenType, string loginProvider)
@@ -126,5 +131,35 @@ public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquata
             t.LoginProvider == loginProvider &&
             t.Name == tokenType.ToString() &&
             t.UserId.Equals(user.Id));
+    }
+
+    public async Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType)
+    {
+        return await _userManager.Users.Where(u => u.UserTokens.Any(t => t.Name == tokenType.ToString() && t.Value == token)).FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> RemoveTokenAsync(TKey userId, TokenType tokenType)
+    {
+        var user = _userManager.Users
+            .Where(u => u.Id.Equals(userId))
+            .Include(u => u.UserTokens)
+            .FirstOrDefault();
+
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.UserTokens ??= [];
+
+        var existingToken = user.UserTokens.FirstOrDefault(t => t.Name == tokenType.ToString() && t.UserId.Equals(userId));
+
+        if (existingToken is null)
+        {
+            return false;
+        }
+
+        await RemoveUserTokenAsync(user, existingToken, _userManager);
+        return true;
     }
 }

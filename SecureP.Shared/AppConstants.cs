@@ -32,4 +32,10 @@ public static class AppConstants
         public static int ExpiryMinute => 10;
         public static string TemporaryCookieName => "SecureP-OTP-Email";
     }
+
+    public class CookieNames
+    {
+        public const string RefreshToken = "refresh_token";
+        public const string AccessToken = "access_token";
+    }
 }

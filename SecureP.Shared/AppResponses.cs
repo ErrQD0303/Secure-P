@@ -2,6 +2,14 @@ namespace SecureP.Shared;
 
 public class AppResponses
 {
+    public class UserLogoutResponses
+    {
+        public const string UserLoggedOut = "User logged out";
+        public const string UserLogoutFailed = "User failed to logout";
+
+        public const string UserNotFound = "User not found";
+    }
+
     public class UserRegisterResponses
     {
         public const string UserRegistered = "User registered";

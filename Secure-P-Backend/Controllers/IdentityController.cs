@@ -1,14 +1,12 @@
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
-using SecureP.Identity.Models.Dto;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
-using SecureP.Service.UserService;
+using SecureP.Service.Abstraction.Exceptions;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
 using SecureP.Shared.Mappers;
@@ -22,11 +20,11 @@ public class IdentityController : ControllerBase
 {
     private readonly ILogger<IdentityController> _logger;
     private readonly IUserService<string> _userService;
-    private readonly ITokenService _tokenService;
+    private readonly ITokenService<string> _tokenService;
     private readonly JwtConfigures _jwtConfigures;
     private readonly IEmailService _emailService;
 
-    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService tokenService, IOptions<JwtConfigures> jwtConfigures, IEmailService emailService)
+    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService<string> tokenService, IOptions<JwtConfigures> jwtConfigures, IEmailService emailService)
     {
         _logger = logger;
         _userService = userService;
@@ -40,7 +38,31 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
         // Register user
-        var user = await _userService.RegisterAsync(registerRequest);
+        AppUser<string>? user = null;
+        try
+        {
+            user = await _userService.RegisterAsync(registerRequest);
+        }
+        catch (UserRegisterException ex)
+        {
+            var passwordErrors = ex.IdentityErrors
+                .Where(e => e.Code.StartsWith("Password"))
+                .Select(e => e.Description)
+                .Aggregate(string.Empty, (acc, desc) => acc + "\ndesc");
+            var normalErrors = ex.IdentityErrors.Where(e => !e.Code.StartsWith("Password")).ToDictionary(e => e.Code, e => e.Description);
+            var identityErrors = new Dictionary<string, string>(normalErrors)
+            {
+                { "Password", passwordErrors }
+            };
+
+            return BadRequest(new UserRegisterResponse<string>
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UserRegisterResponses.UserRegistrationFailed,
+                Errors = identityErrors.Union(AppResponseErrors.UserRegisterErrors.UserRegistrationFailed).ToDictionary(e => e.Key, e => e.Value)
+            });
+        }
 
         if (user == null)
         {
@@ -55,13 +77,76 @@ public class IdentityController : ControllerBase
 
         var userDto = new UserRegisterResponse<string>
         {
-            StatusCode = StatusCodes.Status200OK,
+            StatusCode = StatusCodes.Status201Created,
             Success = "true",
-            Message = AppResponses.GetUserInfoResponses.UserFound,
+            Message = AppResponses.UserRegisterResponses.UserRegistered,
             User = user.ToUserRegisterResponseAppUser()
         };
 
         return CreatedAtAction(nameof(GetUserInfo), new { id = user.Id }, userDto);
+    }
+
+    [HttpPost("user/logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (userId == null)
+        {
+            return NotFound(new LogoutResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.UserLogoutResponses.UserNotFound,
+            });
+        }
+
+        var user = await _userService.GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            return NotFound(new LogoutResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.UserLogoutResponses.UserNotFound,
+            });
+        }
+
+        await RemoveAccessAndRefreshTokensAsync(Response, _tokenService, userId);
+
+        return Ok(new LogoutResponse<string>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.UserLogoutResponses.UserLoggedOut,
+        });
+    }
+
+    public static async Task RemoveAccessAndRefreshTokensAsync(HttpResponse Response, ITokenService<string> tokenService, string userId)
+    {
+        await tokenService.InvalidateAccessTokenAsync(userId);
+        await tokenService.InvalidateRefreshTokenAsync(userId);
+
+        Response.Cookies.Append(AppConstants.CookieNames.AccessToken, string.Empty, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+            SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+            Expires = DateTime.UtcNow,
+            Path = "/",
+            Domain = "localhost"
+        });
+
+        Response.Cookies.Append(AppConstants.CookieNames.RefreshToken, string.Empty, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+            SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+            Expires = DateTime.UtcNow,
+            Path = "/",
+            Domain = "localhost"
+        });
     }
 
     [HttpGet("user/getInfo")]
@@ -71,7 +156,12 @@ public class IdentityController : ControllerBase
 
         if (userId == null)
         {
-            return BadRequest("User not found");
+            return NotFound(new GetUserInfoResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.GetUserInfoResponses.UserNotFound,
+            });
         }
 
         var user = await _userService.GetUserByIdAsync(userId);
@@ -150,7 +240,7 @@ public class IdentityController : ControllerBase
 
             var otp = await _tokenService.GenerateOTPAsync(user.Email);
 
-            _emailService.SendOTPEmailAsync(user.Email, otp);
+            _ = _emailService.SendOTPEmailAsync(user.Email, otp);
         }
 
         return Ok(new LoginResponse<string>
@@ -196,7 +286,7 @@ public class IdentityController : ControllerBase
             Domain = "localhost" // Ensure this matches the domain used when setting the cookie
         });
 
-        await SetAccessCookies(request, user);
+        _ = await SetAccessCookies(request, user, Response, _tokenService, _jwtConfigures);
 
         return Ok(new LoginResponse<string>
         {
@@ -207,33 +297,42 @@ public class IdentityController : ControllerBase
         });
     }
 
-    private async Task SetAccessCookies(dynamic? requestData, AppUser<string>? user)
+    public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string>? user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
-        Response.Cookies.Append("access_token", await _tokenService.GenerateAccessTokenAsync(new TokenRequest
+        var tokenResponse = new TokenResponse
         {
-            Email = user?.Email ?? string.Empty,
-        }), new CookieOptions
+            AccessToken = await tokenService.GenerateAccessTokenAsync(new TokenRequest
+            {
+                Email = user?.Email ?? string.Empty,
+            }),
+            RefreshToken = await tokenService.GenerateRefreshTokenAsync(new TokenRequest
+            {
+                Email = user?.Email ?? string.Empty,
+            }),
+            TokenType = "Bearer"
+        };
+
+        Response.Cookies.Append("access_token", tokenResponse.AccessToken, new CookieOptions
         {
             HttpOnly = false,
             Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
-            Expires = DateTime.UtcNow.AddSeconds(_jwtConfigures.ExpirySeconds),
+            Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.ExpirySeconds),
             Path = "/",
             Domain = "localhost"
         });
 
-        Response.Cookies.Append("refresh_token", await _tokenService.GenerateRefreshTokenAsync(new TokenRequest
-        {
-            Email = user?.Email ?? string.Empty,
-        }), new CookieOptions
+        Response.Cookies.Append("refresh_token", tokenResponse.RefreshToken, new CookieOptions
         {
             HttpOnly = false,
             Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
-            Expires = DateTime.UtcNow.AddSeconds(_jwtConfigures.RefreshExpirySeconds),
+            Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.RefreshExpirySeconds),
             Path = "/",
             Domain = "localhost"
         });
+
+        return tokenResponse;
     }
 
     [HttpGet("get-user/{id}")]

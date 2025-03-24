@@ -1,7 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Shared.Configures;
+using YamlDotNet.Core.Tokens;
 
 namespace Secure_P_Backend.Controllers;
 
@@ -9,13 +12,15 @@ namespace Secure_P_Backend.Controllers;
 [Route("[controller]")]
 public class TokenController : ControllerBase
 {
-    private readonly ITokenService _tokenService;
+    private readonly ITokenService<string> _tokenService;
     private readonly ILogger<TokenController> _logger;
+    private readonly JwtConfigures _jwtConfigures;
 
-    public TokenController(ITokenService tokenService, ILogger<TokenController> logger)
+    public TokenController(ITokenService<string> tokenService, ILogger<TokenController> logger, IOptions<JwtConfigures> jwtConfigures)
     {
         _tokenService = tokenService;
         _logger = logger;
+        _jwtConfigures = jwtConfigures.Value;
     }
 
     [HttpPost("token")]
@@ -31,14 +36,23 @@ public class TokenController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
         _logger.LogInformation($"Refreshing Tokens for tokens {refreshTokenRequest.RefreshToken}");
-        if (!await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest))
+
+        var (isValid, appUser) = await _tokenService.ValidateRefreshTokenAsync(refreshTokenRequest);
+
+        if (!isValid)
         {
             return BadRequest("Invalid Refresh Token");
         }
 
-        var response = await GenerateTokenResponseAsync(refreshTokenRequest);
+        var tokenRequest = new TokenRequest
+        {
+            Email = appUser?.Email,
+            Username = appUser?.UserName
+        };
 
-        return Ok(response);
+        var tokenResponse = await IdentityController.SetAccessCookies(tokenRequest, appUser, Response, _tokenService, _jwtConfigures);
+
+        return Ok(tokenResponse);
     }
 
     private async Task<TokenResponse> GenerateTokenResponseAsync(TokenRequest tokenRequest)

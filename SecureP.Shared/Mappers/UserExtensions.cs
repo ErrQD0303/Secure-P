@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.TagHelpers.Cache;
 using SecureP.Identity.Models;
 using SecureP.Identity.Models.Dto;
 using SecureP.Service.Abstraction.Entities;
@@ -113,6 +115,60 @@ namespace SecureP.Shared.Mappers
                     PostCode = user.PostCode,
                     UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []]
                 };
+        }
+
+        public static RegisterValidatedUserDto<TKey> ToRegisterValidatedUserDto<TKey>(this RegisterRequest registerRequest) where TKey : IEquatable<TKey>
+        {
+            return new RegisterValidatedUserDto<TKey>
+            {
+                UserName = registerRequest.Username ?? registerRequest.Email,
+                Password = registerRequest.Password,
+                Email = registerRequest.Email,
+                PhoneNumber = registerRequest.PhoneNumber,
+                FullName = registerRequest.FullName,
+                DayOfBirth = registerRequest.DayOfBirth,
+                Country = registerRequest.Country,
+                City = registerRequest.City,
+                AddressLine1 = registerRequest.AddressLine1,
+                AddressLine2 = registerRequest.AddressLine2,
+                PostCode = registerRequest.PostCode ?? string.Empty,
+                LicensePlates = registerRequest.LicensePlates
+            };
+        }
+
+        public static AppUser<TKey> ToAppUser<TKey>(this RegisterValidatedUserDto<TKey> user, UserManager<AppUser<TKey>> userManager) where TKey : IEquatable<TKey>
+        {
+            var newUser = new AppUser<TKey>
+            {
+                UserName = user.UserName ?? user.Email,
+                Email = user.Email,
+                EmailConfirmed = false,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                TwoFactorEnabled = userManager.Options.SignIn.RequireConfirmedEmail,
+                LockoutEnabled = userManager.Options.Lockout.AllowedForNewUsers,
+                PhoneNumber = user.PhoneNumber,
+                FullName = user.FullName ?? string.Empty,
+                DayOfBirth = user.DayOfBirth,
+                Country = user.Country ?? string.Empty,
+                City = user.City ?? string.Empty,
+                AddressLine1 = user.AddressLine1 ?? string.Empty,
+                AddressLine2 = user.AddressLine2,
+                PostCode = user.PostCode ?? string.Empty,
+                Id = typeof(TKey) switch
+                {
+                    Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
+                    Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid().ToString(),
+                    _ => throw new NotImplementedException()
+                }
+            };
+
+            newUser.UserLicensePlates = [.. user.LicensePlates.Select(lp => new AppUserLicensePlate<TKey>
+            {
+                LicensePlateNumber = lp,
+                UserId = newUser.Id,
+            })];
+
+            return newUser;
         }
     }
 }

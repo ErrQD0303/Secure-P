@@ -2,6 +2,7 @@
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,7 +17,7 @@ using SecureP.Shared.Configures;
 
 namespace SecureP.Service.TokenService;
 
-public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
+public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TKey>
 {
     private readonly ITokenRepository<TKey> _tokenRepository;
     private readonly ILogger<TokenService<TKey>> _logger;
@@ -118,29 +119,13 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
         return await _tokenRepository.ValidateTokenAsync(accessToken, user.Id, TokenType.AccessToken, loginProviderInfo != null ? loginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
     }
 
-    public async Task<bool> ValidateRefreshTokenAsync(RefreshTokenRequest request)
+    public async Task<(bool isValid, AppUser<TKey>? appUser)> ValidateRefreshTokenAsync(RefreshTokenRequest request)
     {
         _logger.LogInformation("Validating Refresh Token");
 
-        AppUser<TKey>? user;
+        var appUser = await _tokenRepository.GetUserByTokenAsync(request?.RefreshToken!, TokenType.RefreshToken);
 
-        if (request.Email != null)
-        {
-            user = await _userManager.FindByEmailAsync(request.Email);
-        }
-        else
-        {
-            user = await _userManager.FindByNameAsync(request?.Username?.ToString() ?? string.Empty);
-        }
-
-        if (user == null)
-        {
-            return false;
-        }
-
-        var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
-
-        return await _tokenRepository.ValidateTokenAsync(request?.RefreshToken!, user.Id, TokenType.RefreshToken, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        return (appUser != null, appUser);
     }
 
     private static readonly Random random = new();
@@ -184,5 +169,16 @@ public class TokenService<TKey> : ITokenService where TKey : IEquatable<TKey>
         var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
 
         return await _tokenRepository.ValidateTokenAsync(otp, user.Id, TokenType.OTP, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+    }
+    public async Task InvalidateRefreshTokenAsync(TKey userId)
+    {
+        await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
+    }
+
+
+
+    public Task InvalidateAccessTokenAsync(TKey userId)
+    {
+        return _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
     }
 }
