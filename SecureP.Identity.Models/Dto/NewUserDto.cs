@@ -14,4 +14,5 @@ public class NewUserDto<TKey> where TKey : IEquatable<TKey>
     public string? AddressLine2 { get; set; } = default!;
     public string PostCode { get; set; } = default!;
     public ICollection<string> LicensePlates { get; set; } = default!;
+    public string? Avatar { get; set; }
 }

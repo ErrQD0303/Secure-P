@@ -18,6 +18,8 @@ public class GetUserInfoResponseAppUser<TKey> where TKey : IEquatable<TKey>
     public string Username { get; set; } = default!;
     [JsonPropertyName("email")]
     public string Email { get; set; } = default!;
+    [JsonPropertyName("emailConfirmed")]
+    public bool EmailConfirmed { get; set; } = default!;
     [JsonPropertyName("mobileNumber")]
     public string PhoneNumber { get; set; } = default!;
     [JsonPropertyName("fullName")]
@@ -37,4 +39,5 @@ public class GetUserInfoResponseAppUser<TKey> where TKey : IEquatable<TKey>
     [JsonPropertyName("licensePlateNumber")]
     public ICollection<string> UserLicensePlates
     { get; set; } = default!;
+    public string? Avatar { get; set; }
 }

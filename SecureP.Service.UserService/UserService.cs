@@ -1,13 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Identity.Models.Dto;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
+using SecureP.Shared;
+using SecureP.Shared.Configures;
 using SecureP.Shared.Mappers;
 
 namespace SecureP.Service.UserService;
@@ -17,12 +23,16 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     private readonly ILogger<UserService<TKey>> _logger;
     private readonly UserManager<AppUser<TKey>> _userManager;
     private readonly IPasswordValidator<AppUser<TKey>> _passwordValidator;
+    private readonly JwtConfigures _jwtConfigures;
+    private readonly IEmailService _emailService;
 
-    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator)
+    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailService emailService)
     {
         _logger = logger;
         _userManager = userManager;
         _passwordValidator = passwordValidator;
+        _jwtConfigures = jwtConfiguresOptions.Value;
+        _emailService = emailService;
     }
 
     public async Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
@@ -101,6 +111,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
             return null;
         }
 
+        _ = SendConfirmationEmailAsync(newUser);
         return newUser;
     }
 
@@ -155,5 +166,52 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     public Task<AppUser<TKey>?> GetUserByNameAsync(string username)
     {
         return _userManager.FindByNameAsync(username);
+    }
+
+    public async Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Token))
+            return false;
+
+        var user = await GetUserByEmailAsync(request.Email);
+        if (user == null) return false;
+
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.Token));
+
+        var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+        return result.Succeeded;
+    }
+
+    private async Task SendConfirmationEmailAsync(AppUser<TKey> user)
+    {
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var based64Token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        var confirmEmailActionUrl = Path.Combine(_jwtConfigures.Authority!, AppConstants.DefaultRoutePrefix, AppConstants.AppController.IdentityController.DefaultRoute, AppConstants.AppController.IdentityController.ConfirmEmail)
+            .Replace("\\", "/");
+        var url = string.Format("{0}?email={1}&token={2}", confirmEmailActionUrl, UrlEncoder.Default.Encode(user.Email!), based64Token);
+
+        if (user.Email == null) return;
+
+        // Send email
+        await _emailService.SendConfirmationEmailAsync(user.Email, url);
+    }
+
+    public async Task ResendConfirmationEmailAsync(string email)
+    {
+        var user = await GetUserByEmailAsync(email);
+        if (user == null) return;
+
+        _ = SendConfirmationEmailAsync(user);
+    }
+
+    public async Task<bool> UpdateUserAsync(AppUser<TKey> user)
+    {
+        if (user is null) return false;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        return result.Succeeded;
     }
 }

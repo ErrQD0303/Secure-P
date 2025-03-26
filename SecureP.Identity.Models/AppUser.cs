@@ -16,6 +16,7 @@ public class AppUser<TKey> : IdentityUser<TKey> where TKey : IEquatable<TKey>
     public virtual string AddressLine1 { get; set; } = default!;
     public virtual string? AddressLine2 { get; set; } = default!;
     public virtual string PostCode { get; set; } = default!;
+    public virtual string? Avatar { get; set; }
 
     public virtual ICollection<AppUserToken<TKey>> UserTokens
     { get; set; } = default!;

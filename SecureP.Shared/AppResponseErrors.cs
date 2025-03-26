@@ -17,4 +17,20 @@ public class AppResponseErrors
             { "summary", "User registration failed" }
         };
     }
+
+    public class EmailConfirmationErrors
+    {
+        public static Dictionary<string, string> EmailConfirmationFailed => new()
+        {
+            { "summary", "Email confirmation failed" }
+        };
+    }
+    public class ResendEmailConfirmationErrors
+    {
+        public static Dictionary<string, string> EmailIsNotMatch => new()
+        {
+            { "summary", "Email confirmation failed" },
+            {"email", "Email is not matched with the email in the database"}
+        };
+    }
 }

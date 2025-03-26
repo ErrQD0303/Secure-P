@@ -30,7 +30,12 @@ public static class EmailServiceExtensions
                 services.GetRequiredService<SmtpClient>(),
                 services.GetRequiredService<IOptions<AuthMessageSenderOptions>>());
 
-            return new EmailService(otpEmailSender);
+            var confirmEmailSender = new ConfirmEmailSender(
+                services.GetRequiredService<ILogger<ConfirmEmailSender>>(),
+                services.GetRequiredService<SmtpClient>(),
+                services.GetRequiredService<IOptions<AuthMessageSenderOptions>>());
+
+            return new EmailService(otpEmailSender, confirmEmailSender);
         });
 
         return services;

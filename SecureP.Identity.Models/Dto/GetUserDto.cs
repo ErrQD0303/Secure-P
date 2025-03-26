@@ -21,4 +21,5 @@ public class GetUserDto<TKey> where TKey : IEquatable<TKey>
     public string PostCode { get; set; } = default!;
     public ICollection<GetUserTokenDto<TKey>> UserTokens { get; set; } = default!;
     public ICollection<string> LicensePlates { get; set; } = default!;
+    public string? Avatar { get; set; }
 }

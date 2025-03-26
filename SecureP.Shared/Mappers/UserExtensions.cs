@@ -34,7 +34,8 @@ namespace SecureP.Shared.Mappers
                 UserTokens = [.. user.UserTokens.Select(ut => ut.ToGetUserTokenDto())],
                 LicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
                 AccessFailedCount = user.AccessFailedCount,
-                PostCode = user.PostCode
+                PostCode = user.PostCode,
+                Avatar = user.Avatar
             };
         }
 
@@ -55,6 +56,7 @@ namespace SecureP.Shared.Mappers
                 FullName = user.FullName,
                 PostCode = user.PostCode,
                 LicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
+                Avatar = user.Avatar
             };
         }
 
@@ -65,6 +67,7 @@ namespace SecureP.Shared.Mappers
                 Id = user.Id,
                 Username = user.UserName!,
                 Email = user.Email!,
+                EmailConfirmed = user.EmailConfirmed!,
                 PhoneNumber = user.PhoneNumber!,
                 DayOfBirth = user.DayOfBirth!,
                 Country = user.Country,
@@ -73,7 +76,8 @@ namespace SecureP.Shared.Mappers
                 AddressLine2 = user.AddressLine2,
                 FullName = user.FullName,
                 PostCode = user.PostCode,
-                UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []]
+                UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
+                Avatar = user.Avatar
             };
         }
 
@@ -84,6 +88,7 @@ namespace SecureP.Shared.Mappers
                 Id = user.Id,
                 Username = user.UserName!,
                 Email = user.Email!,
+                EmailConfirmed = user.EmailConfirmed!,
                 PhoneNumber = user.PhoneNumber!,
                 DayOfBirth = user.DayOfBirth!,
                 Country = user.Country,
@@ -92,7 +97,8 @@ namespace SecureP.Shared.Mappers
                 AddressLine2 = user.AddressLine2,
                 FullName = user.FullName,
                 PostCode = user.PostCode,
-                UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []]
+                UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
+                Avatar = user.Avatar
             };
         }
 
@@ -105,6 +111,7 @@ namespace SecureP.Shared.Mappers
                     Id = user.Id,
                     Username = user?.UserName ?? string.Empty,
                     Email = user?.Email ?? string.Empty,
+                    EmailConfirmed = user!.EmailConfirmed,
                     PhoneNumber = user?.PhoneNumber ?? string.Empty,
                     FullName = user?.FullName ?? string.Empty,
                     DayOfBirth = user!.DayOfBirth,
@@ -113,7 +120,8 @@ namespace SecureP.Shared.Mappers
                     AddressLine1 = user.AddressLine1,
                     AddressLine2 = user.AddressLine2,
                     PostCode = user.PostCode,
-                    UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []]
+                    UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
+                    Avatar = user.Avatar
                 };
         }
 
@@ -132,7 +140,7 @@ namespace SecureP.Shared.Mappers
                 AddressLine1 = registerRequest.AddressLine1,
                 AddressLine2 = registerRequest.AddressLine2,
                 PostCode = registerRequest.PostCode ?? string.Empty,
-                LicensePlates = registerRequest.LicensePlates
+                LicensePlates = registerRequest.LicensePlates,
             };
         }
 
@@ -159,7 +167,7 @@ namespace SecureP.Shared.Mappers
                     Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
                     Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid().ToString(),
                     _ => throw new NotImplementedException()
-                }
+                },
             };
 
             newUser.UserLicensePlates = [.. user.LicensePlates.Select(lp => new AppUserLicensePlate<TKey>

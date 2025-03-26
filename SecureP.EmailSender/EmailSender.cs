@@ -10,11 +10,11 @@ namespace SecureP.EmailSender;
 
 public class EmailSender : IEmailSender
 {
-    protected readonly ILogger<OTPEmailSender> _logger;
+    protected readonly ILogger<EmailSender> _logger;
     protected readonly SmtpClient _smtpClient;
     public virtual string EmailType { get; internal set; } = AppConstants.SupportEmailType.Default;
 
-    public EmailSender(ILogger<OTPEmailSender> logger, SmtpClient smtpClient, IOptions<AuthMessageSenderOptions> options)
+    public EmailSender(ILogger<EmailSender> logger, SmtpClient smtpClient, IOptions<AuthMessageSenderOptions> options)
     {
         _logger = logger;
         _smtpClient = smtpClient;
