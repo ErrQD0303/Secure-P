@@ -11,25 +11,36 @@ using Secure_P_Backend.Helpers.Extensions;
 using SecureP.Identity.Models;
 using SecureP.Service.EmailService.Extensions;
 using SecureP.Service.TokenService.Extensions;
+using SecureP.Service.UploadService.Extensions;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddControllers(o =>
 {
     o.UseRoutePrefix(AppConstants.DefaultRoutePrefix);
 });
-/* .AddJsonOptions(options =>
+
+builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-}); */
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.ConsentCookieValue = "true";
+    options.CheckConsentNeeded = context => AppConstants.EnableGDPR;
+    options.ConsentCookie = new CookieBuilder
+    {
+        Name = AppConstants.DefaultLoginProvider + "_ConsentCookie",
+        Expiration = TimeSpan.FromDays(90),
+        IsEssential = true,
+        SameSite = SameSiteMode.None,
+        SecurePolicy = CookieSecurePolicy.Always,
+        HttpOnly = false
+    };
+});
 
 builder.Services.AddEmailService(builder.Configuration);
+builder.Services.AddUploadService<string>();
 
 builder.Services.AddOpenApiDocument(options =>
 {
@@ -90,6 +101,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseCookiePolicy();
 
 app.UseCORS();
 

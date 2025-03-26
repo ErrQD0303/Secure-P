@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Shared;
 using SecureP.Shared.Configures;
 using YamlDotNet.Core.Tokens;
 
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route(AppConstants.AppController.TokenController.DefaultRoute)]
 public class TokenController : ControllerBase
 {
     private readonly ITokenService<string> _tokenService;
@@ -23,7 +24,7 @@ public class TokenController : ControllerBase
         _jwtConfigures = jwtConfigures.Value;
     }
 
-    [HttpPost("token")]
+    [HttpPost(AppConstants.AppController.TokenController.GenerateToken)]
     public async Task<IActionResult> GenerateToken([FromBody] TokenRequest tokenRequest)
     {
         _logger.LogInformation($"Generating Tokens for user {tokenRequest.Email ?? tokenRequest.Username}");
@@ -32,7 +33,7 @@ public class TokenController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPost("refresh")]
+    [HttpPost(AppConstants.AppController.TokenController.RefreshToken)]
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest refreshTokenRequest)
     {
         _logger.LogInformation($"Refreshing Tokens for tokens {refreshTokenRequest.RefreshToken}");

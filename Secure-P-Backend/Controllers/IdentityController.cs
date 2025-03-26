@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Service.Abstraction;
@@ -14,7 +15,7 @@ using SecureP.Shared.Mappers;
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route(AppConstants.AppController.IdentityController.DefaultRoute)]
 [Authorize]
 public class IdentityController : ControllerBase
 {
@@ -34,7 +35,7 @@ public class IdentityController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("user/register")]
+    [HttpPost(AppConstants.AppController.IdentityController.Register)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
         // Register user
@@ -86,7 +87,7 @@ public class IdentityController : ControllerBase
         return CreatedAtAction(nameof(GetUserInfo), new { id = user.Id }, userDto);
     }
 
-    [HttpPost("user/logout")]
+    [HttpPost(AppConstants.AppController.IdentityController.Logout)]
     public async Task<IActionResult> Logout()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -123,6 +124,7 @@ public class IdentityController : ControllerBase
         });
     }
 
+    [NonAction]
     public static async Task RemoveAccessAndRefreshTokensAsync(HttpResponse Response, ITokenService<string> tokenService, string userId)
     {
         await tokenService.InvalidateAccessTokenAsync(userId);
@@ -149,7 +151,8 @@ public class IdentityController : ControllerBase
         });
     }
 
-    [HttpGet("user/getInfo")]
+    [HttpGet(AppConstants.AppController.IdentityController.GetUserInfo)]
+    [DisableRateLimiting]
     public async Task<IActionResult> GetUserInfo()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -186,7 +189,7 @@ public class IdentityController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("user/login")]
+    [HttpPost(AppConstants.AppController.IdentityController.Login)]
     public async Task<IActionResult> Login([FromRoute] LoginType loginType)
     {
         // Login user
@@ -252,7 +255,7 @@ public class IdentityController : ControllerBase
     }
 
     [AllowAnonymous]
-    [HttpPost("user/otp-login")]
+    [HttpPost(AppConstants.AppController.IdentityController.OTPLogin)]
     public async Task<IActionResult> OTPLogin([FromBody] OTPLoginRequest request)
     {
         if (!await _tokenService.ValidateOTPAsync(request.Email, request.OTP))
@@ -297,6 +300,7 @@ public class IdentityController : ControllerBase
         });
     }
 
+    [NonAction]
     public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string>? user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
         var tokenResponse = new TokenResponse
@@ -335,7 +339,65 @@ public class IdentityController : ControllerBase
         return tokenResponse;
     }
 
-    [HttpGet("get-user/{id}")]
+    [AllowAnonymous]
+    [HttpGet(AppConstants.AppController.IdentityController.ConfirmEmail)]
+    public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequest request)
+    {
+        if (await _userService.ConfirmEmailAsync(request))
+        {
+            return Ok(new ConfirmEmailResponse<string>
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Success = "true",
+                Message = AppResponses.EmailConfirmationResponses.EmailConfirmed,
+            });
+        }
+
+        return BadRequest(new ConfirmEmailResponse<string>
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Success = "false",
+            Message = AppResponses.EmailConfirmationResponses.EmailConfirmationFailed,
+            Errors = AppResponseErrors.EmailConfirmationErrors.EmailConfirmationFailed
+        });
+    }
+
+    [HttpPost(AppConstants.AppController.IdentityController.ResendEmailConfirmation)]
+    public async Task<IActionResult> ResendConfirmationEmail(ResendConfirmEmailRequest request)
+    {
+        var email = User.FindFirstValue(ClaimTypes.Email);
+        if (email == null)
+        {
+            return NotFound(new ResendConfirmEmailResponse<string>
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.ResendEmailConfirmationResponses.UserNotFound,
+            });
+        }
+
+        if (email != request.Email)
+        {
+            return BadRequest(new ResendConfirmEmailResponse<string>
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.ResendEmailConfirmationResponses.EmailIsNotMatch,
+                Errors = AppResponseErrors.ResendEmailConfirmationErrors.EmailIsNotMatch
+            });
+        }
+
+        await _userService.ResendConfirmationEmailAsync(email);
+
+        return Ok(new ResendConfirmEmailResponse<string>
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.ResendEmailConfirmationResponses.EmailSent,
+        });
+    }
+
+    [HttpGet(AppConstants.AppController.IdentityController.AdminUser.GetUser)]
     // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUser([FromRoute] string id)
     {
@@ -349,7 +411,7 @@ public class IdentityController : ControllerBase
         return Ok(user.ToGetUserDto());
     }
 
-    [HttpGet("get-users")]
+    [HttpGet(AppConstants.AppController.IdentityController.AdminUser.GetAllUser)]
     // [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetUsers()
     {
@@ -358,11 +420,4 @@ public class IdentityController : ControllerBase
 
         return Ok(users);
     }
-}
-
-public enum LoginType
-{
-    Email = 0,
-    Username,
-    PhoneNumber
 }

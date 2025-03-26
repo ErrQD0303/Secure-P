@@ -29,6 +29,7 @@
     <ProjectReference Include="..\SecureP.Service.TokenService\SecureP.Service.TokenService.csproj" />
     <ProjectReference Include="..\SecureP.Service.UserService\SecureP.Service.UserService.csproj" />
     <ProjectReference Include="..\SecureP.Service.EmailService\SecureP.Service.EmailService.csproj" />
+    <ProjectReference Include="..\SecureP.Service.UploadService\SecureP.Service.UploadService.csproj" />
   </ItemGroup>
 
 </Project>
