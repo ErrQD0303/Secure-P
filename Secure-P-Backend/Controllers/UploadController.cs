@@ -42,9 +42,9 @@ public class UploadController : ControllerBase
                 }
             );
         }
-        var response = await _uploadService.UploadAvatarAsync(request.Avatar, userId);
+        var avatarUrl = await _uploadService.UploadAvatarAsync(request.Avatar, userId);
 
-        if (!response)
+        if (string.IsNullOrEmpty(avatarUrl))
         {
             return BadRequest(
                 new UploadAvatarResponse<string>
@@ -63,9 +63,10 @@ public class UploadController : ControllerBase
         return Ok(
             new UploadAvatarResponse<string>
             {
-                StatusCode = 200,
+                StatusCode = StatusCodes.Status200OK,
                 Success = "true",
                 Message = "Upload successful",
+                AvatarUrl = avatarUrl
             }
         );
     }
