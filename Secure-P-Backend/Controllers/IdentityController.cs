@@ -420,4 +420,98 @@ public class IdentityController : ControllerBase
 
         return Ok(users);
     }
+
+    [HttpPut(AppConstants.AppController.IdentityController.UpdateProfile)]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized(new UpdateProfileResponse
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.UpdateProfileResponses.UserNotFound,
+            });
+        }
+
+        var (success, errors) = await _userService.UpdateProfileAsync(userId, request);
+
+        if (success)
+        {
+            return Ok(new UpdateProfileResponse
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Success = "true",
+                Message = AppResponses.UpdateProfileResponses.ProfileUpdated,
+            });
+        }
+
+        return BadRequest(new UpdateProfileResponse
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Success = "false",
+            Message = AppResponses.UpdateProfileResponses.ProfileNotUpdated,
+            Errors = errors.ToDictionary(e => e.Code, e => e.Description)
+        });
+    }
+
+    [HttpPut(AppConstants.AppController.IdentityController.ChangePassword)]
+    public async Task<IActionResult> ChangePassword([FromBody] UpdatePasswordRequest request)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null)
+        {
+            return Unauthorized(new UpdatePasswordResponse
+            {
+                StatusCode = StatusCodes.Status404NotFound,
+                Success = "false",
+                Message = AppResponses.UpdatePasswordResponses.UserNotFound,
+            });
+        }
+
+        if (request.OldPassword == request.NewPassword)
+        {
+            return BadRequest(new UpdatePasswordResponse
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UpdatePasswordResponses.NewPasswordIsSameAsOldPassword,
+                Errors = AppResponseErrors.UpdatePasswordErrors.NewPasswordIsSameAsOldPassword
+            });
+        }
+
+        var (success, errors) = await _userService.UpdatePasswordAsync(userId, request);
+
+        if (!success)
+        {
+            var returnErrors = new Dictionary<string, object>();
+
+            if (errors.Any(e => e.Code == "PasswordMismatch"))
+            {
+                returnErrors.Add("CurrentPassword", errors.First(e => e.Code == "PasswordMismatch").Description);
+                returnErrors.Add("summary", "Invalid password");
+            }
+
+            if (errors.Any(e => e.Code != "PasswordMismatch"))
+            {
+                returnErrors.Add("NewPassword", errors.Where(e => e.Code != "PasswordMismatch").ToDictionary(e => e.Code, e => e.Description));
+            }
+
+            return BadRequest(new UpdatePasswordResponse
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UpdatePasswordResponses.PasswordNotUpdated,
+                Errors = returnErrors
+            });
+        }
+
+        return Ok(new UpdatePasswordResponse
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.UpdatePasswordResponses.PasswordUpdated,
+        });
+    }
 }
