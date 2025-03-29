@@ -28,7 +28,7 @@ public class CORSHostingStartup : IHostingStartup
                         {
                             options.AddPolicy(origin.Name, policyBuilder =>
                             {
-                                policyBuilder.WithOrigins(origin.Origins.Split(','))
+                                policyBuilder.WithOrigins(origin.Origins.Split(';'))
                                     .AllowCredentials()
                                     .AllowAnyMethod()
                                     .AllowAnyHeader();
