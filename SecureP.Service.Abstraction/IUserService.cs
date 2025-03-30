@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using SecureP.Identity.Models;
 using SecureP.Service.Abstraction.Entities;
 
@@ -15,4 +16,8 @@ public interface IUserService<TKey> where TKey : IEquatable<TKey>
     Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request);
     Task ResendConfirmationEmailAsync(string email);
     Task<bool> UpdateUserAsync(AppUser<TKey> user);
+    Task<(bool, IEnumerable<IdentityError>)> UpdateProfileAsync(string userId, UpdateProfileRequest request);
+    Task<(bool, IEnumerable<IdentityError>)> UpdatePasswordAsync(string userId, UpdatePasswordRequest request);
+    Task<IdentityResult> SendForgotPasswordEmailAsync(string email, string redirectUrl);
+    Task<IdentityResult> ResetPasswordAsync(string email, string password, string confirmPassword, string token);
 }

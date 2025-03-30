@@ -35,7 +35,12 @@ public static class EmailServiceExtensions
                 services.GetRequiredService<SmtpClient>(),
                 services.GetRequiredService<IOptions<AuthMessageSenderOptions>>());
 
-            return new EmailService(otpEmailSender, confirmEmailSender);
+            var forgotPasswordEmailSender = new ForgotPasswordEmailSender(
+                services.GetRequiredService<ILogger<ForgotPasswordEmailSender>>(),
+                services.GetRequiredService<SmtpClient>(),
+                services.GetRequiredService<IOptions<AuthMessageSenderOptions>>());
+
+            return new EmailService(otpEmailSender, confirmEmailSender, forgotPasswordEmailSender);
         });
 
         return services;

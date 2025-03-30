@@ -35,6 +35,7 @@ public class UploadService<TKey> : IUploadService<TKey> where TKey : IEquatable<
         await _userService.UpdateUserAsync(user);
 
         var userAvatarPath = Path.Combine(contentRootPath, user.Avatar);
+        System.Console.WriteLine(userAvatarPath);
         using var stream = new FileStream(userAvatarPath, FileMode.Create);
         await formFile.CopyToAsync(stream);
 

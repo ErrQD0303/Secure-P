@@ -14,7 +14,7 @@ public class AppResponseErrors
     {
         public static Dictionary<string, string> UserLoginFailed => new()
         {
-            { "summary", "User registration failed" }
+            { "summary", "User Login failed" }
         };
     }
 
@@ -31,6 +31,21 @@ public class AppResponseErrors
         {
             { "summary", "Email confirmation failed" },
             {"email", "Email is not matched with the email in the database"}
+        };
+    }
+
+    public class UpdatePasswordErrors
+    {
+        public static Dictionary<string, object> UpdatePasswordFailed => new()
+        {
+            { "summary", "Update password failed" }
+        };
+        public static Dictionary<string, object> NewPasswordIsSameAsOldPassword => new()
+        {
+            { "summary", "Update password failed" },
+            { "NewPassword", new Dictionary<string, string> {
+                { "NewPassword", "New password is same as old password" }
+            } }
         };
     }
 }

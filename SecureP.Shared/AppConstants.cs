@@ -18,6 +18,7 @@ public static class AppConstants
         public const string Default = "Normal";
         public const string OTP = "OTP";
         public const string ConfirmEmail = "ConfirmEmail";
+        public const string ForgotPassword = "ForgotPassword";
     }
 
     public class AppEmail
@@ -38,6 +39,15 @@ public static class AppConstants
             public const string HTTPMessage = "<div>Please confirm your email by clicking the link below:</div><b>{0}</b>";
             public static string GetMessage(string confirmLink) => string.Format(Message, confirmLink);
             public static string GetHTTPMessage(string confirmLink) => string.Format(HTTPMessage, confirmLink);
+        }
+
+        public class ForgotPasswordAppEmail
+        {
+            public const string Subject = "SecureP - Password Reset";
+            public const string Message = "To reset your password, please click the link below: ";
+            public const string HTTPMessage = "<div>To reset your password, please click the link below:</div><b>{0}</b>";
+            public static string GetMessage(string resetLink) => string.Format(Message, resetLink);
+            public static string GetHTTPMessage(string resetLink) => string.Format(HTTPMessage, resetLink);
         }
     }
 
@@ -65,6 +75,10 @@ public static class AppConstants
             public const string GetUserInfo = "user/getInfo";
             public const string ConfirmEmail = "user/confirm-email";
             public const string ResendEmailConfirmation = "user/resend-email-confirmation";
+            public const string UpdateProfile = "user/update-profile";
+            public const string ChangePassword = "user/change-password";
+            public const string ForgotPassword = "user/forgot-password";
+            public const string ResetPassword = "user/reset-password";
             public class AdminUser
             {
                 public const string GetUser = "get-user/{id}";

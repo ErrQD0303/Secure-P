@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
@@ -14,6 +15,7 @@ using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
+using SecureP.Shared.Helpers;
 using SecureP.Shared.Mappers;
 
 namespace SecureP.Service.UserService;
@@ -213,5 +215,165 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         var result = await _userManager.UpdateAsync(user);
 
         return result.Succeeded;
+    }
+
+    private static async Task<(bool, IEnumerable<IdentityError>, AppUser<TKey>?)> IsUserValid(string userId, UserManager<AppUser<TKey>> userManager)
+    {
+        if (string.IsNullOrEmpty(userId)) return (false, new List<IdentityError> {
+            new() {
+                Code = "UserIdCannotBeEmpty",
+                Description = "UserId cannot be null or empty"
+            }}
+        , null);
+
+        var user = await userManager.FindByIdAsync(userId);
+        if (user == null) return (false, new List<IdentityError> {
+            new() {
+                Code = "UserNotFound",
+                Description = "User not found"
+            }
+        }, null);
+
+        return (true, Enumerable.Empty<IdentityError>(), user);
+    }
+
+    public async Task<(bool, IEnumerable<IdentityError>)> UpdateProfileAsync(string userId, UpdateProfileRequest request)
+    {
+        var (isUserValid, errors, user) = await IsUserValid(userId, _userManager);
+
+        if (!isUserValid) return (false, errors);
+
+        var oldEmail = user!.Email;
+
+        _ = AppModelValidator.ValidateUserProfile(request.Email, request.PhoneNumber, request.DayOfBirth, out var selfValidateErrors);
+
+        if (selfValidateErrors.Count != 0)
+        {
+            return (false, selfValidateErrors);
+        }
+
+        if (user!.Email != request.Email)
+        {
+            var emailExists = await _userManager.Users.AnyAsync(u => u.Email == request.Email);
+
+            if (emailExists)
+            {
+                return (false, new List<IdentityError> {
+                    new() {
+                        Code = "Email",
+                        Description = "Email already exists"
+                    }
+                });
+            }
+
+            user.Email = request.Email;
+            user.NormalizedEmail = request.Email.ToUpper();
+            user.EmailConfirmed = false;
+        }
+
+        if (user.PhoneNumber != request.PhoneNumber)
+        {
+            user.PhoneNumber = request.PhoneNumber;
+        }
+
+        if (user.DayOfBirth != request.DayOfBirth)
+        {
+            user.DayOfBirth = request.DayOfBirth;
+        }
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (result.Succeeded && oldEmail != request.Email)
+        {
+            _ = SendConfirmationEmailAsync(user);
+        }
+
+        return (result.Succeeded, result.Errors);
+    }
+
+    public async Task<(bool, IEnumerable<IdentityError>)> UpdatePasswordAsync(string userId, UpdatePasswordRequest request)
+    {
+        var (isUserValid, errors, user) = await IsUserValid(userId, _userManager);
+        if (!isUserValid) return (false, errors);
+
+        var result = await _userManager.ChangePasswordAsync(user!, request.OldPassword, request.NewPassword);
+
+        return (result.Succeeded, result.Errors);
+    }
+
+    public async Task<IdentityResult> SendForgotPasswordEmailAsync(string email, string redirectUrl)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null) return IdentityResult.Failed(AppIdentityErrors.UserNotFound);
+
+        if (user.EmailConfirmed == false)
+        {
+            return IdentityResult.Failed(AppIdentityErrors.EmailNotConfirmed);
+        }
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var based64Token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        var forgotPasswordActionUrl = Path.Combine(redirectUrl)
+            .Replace("\\", "/");
+
+        var url = string.Format("{0}?email={1}&token={2}", forgotPasswordActionUrl, UrlEncoder.Default.Encode(user.Email!), based64Token);
+
+        _ = _emailService.SendForgotPasswordEmailAsync(user.Email!, url);
+
+        return IdentityResult.Success;
+    }
+
+    public async Task<IdentityResult> ResetPasswordAsync(string email, string password, string confirmPassword, string token)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(confirmPassword) || string.IsNullOrEmpty(token))
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidRequest);
+        }
+
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user == null) return IdentityResult.Failed(AppIdentityErrors.InvalidEmail);
+
+        if (user.EmailConfirmed == false)
+        {
+            return IdentityResult.Failed(AppIdentityErrors.EmailNotConfirmed);
+        }
+
+        if (password != confirmPassword)
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidConfirmPassword);
+        }
+
+        var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, password);
+
+        if (result.Succeeded)
+        {
+            return IdentityResult.Success;
+        }
+
+        if (result.Errors.Any(e => e.Code == "InvalidToken"))
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidToken);
+        }
+
+        if (result.Errors.Any(e => e.Code == "InvalidPassword"))
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidPassword);
+        }
+
+        if (result.Errors.Any(e => e.Code == "InvalidEmail"))
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidEmail);
+        }
+
+        if (result.Errors.Any(e => e.Code == "InvalidRequest"))
+        {
+            return IdentityResult.Failed(AppIdentityErrors.InvalidRequest);
+        }
+
+        return IdentityResult.Failed(AppIdentityErrors.UnknownError);
     }
 }
