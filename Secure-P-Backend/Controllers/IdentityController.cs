@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
@@ -38,6 +39,7 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.Register)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
+        _logger.LogInformation($"Registering user with email: {registerRequest.Email}");
         // Register user
         AppUser<string>? user = null;
         try
@@ -90,6 +92,7 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.Logout)]
     public async Task<IActionResult> Logout()
     {
+        _logger.LogInformation($"Logging out user with email: {User.FindFirstValue(ClaimTypes.Email)}");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (userId == null)
@@ -155,6 +158,7 @@ public class IdentityController : ControllerBase
     [DisableRateLimiting]
     public async Task<IActionResult> GetUserInfo()
     {
+        _logger.LogInformation($"Getting user info for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (userId == null)
@@ -201,6 +205,7 @@ public class IdentityController : ControllerBase
 
         var requestData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(body);
 
+        _logger.LogInformation($"Logging in user: {requestData?.email ?? requestData?.username ?? string.Empty}");
         var (loginResult, user) = loginType switch
         {
             LoginType.Email => await _userService.LoginByEmailAsync(new LoginByEmailRequest
@@ -258,6 +263,7 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.OTPLogin)]
     public async Task<IActionResult> OTPLogin([FromBody] OTPLoginRequest request)
     {
+        _logger.LogInformation($"Logging in user with email: {request.Email} using OTP");
         if (!await _tokenService.ValidateOTPAsync(request.Email, request.OTP))
         {
             return Unauthorized(new LoginResponse<string>
@@ -343,6 +349,7 @@ public class IdentityController : ControllerBase
     [HttpGet(AppConstants.AppController.IdentityController.ConfirmEmail)]
     public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequest request)
     {
+        _logger.LogInformation($"Confirming email for user with email: {request.Email}");
         if (await _userService.ConfirmEmailAsync(request))
         {
             return Ok(new ConfirmEmailResponse<string>
@@ -365,6 +372,7 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.ResendEmailConfirmation)]
     public async Task<IActionResult> ResendConfirmationEmail(ResendConfirmEmailRequest request)
     {
+        _logger.LogInformation($"Resending confirmation email to user with email: {request.Email}");
         var email = User.FindFirstValue(ClaimTypes.Email);
         if (email == null)
         {
@@ -424,6 +432,7 @@ public class IdentityController : ControllerBase
     [HttpPut(AppConstants.AppController.IdentityController.UpdateProfile)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
+        _logger.LogInformation($"Updating profile for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null)
         {
@@ -459,6 +468,7 @@ public class IdentityController : ControllerBase
     [HttpPut(AppConstants.AppController.IdentityController.ChangePassword)]
     public async Task<IActionResult> ChangePassword([FromBody] UpdatePasswordRequest request)
     {
+        _logger.LogInformation($"Changing password for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null)
         {
@@ -512,6 +522,64 @@ public class IdentityController : ControllerBase
             StatusCode = StatusCodes.Status200OK,
             Success = "true",
             Message = AppResponses.UpdatePasswordResponses.PasswordUpdated,
+        });
+    }
+
+    [HttpPost(AppConstants.AppController.IdentityController.ForgotPassword)]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        _logger.LogInformation($"Sending forgot password email to user with email: {request.Email}");
+
+        await _userService.SendForgotPasswordEmailAsync(request.Email, request.RedirectUrl);
+
+        return Ok(new ForgotPasswordResponse
+        {
+            StatusCode = StatusCodes.Status200OK,
+            Success = "true",
+            Message = AppResponses.ForgotPasswordResponses.ForgotPasswordEmailSent,
+        });
+    }
+
+    [AllowAnonymous]
+    [HttpPost(AppConstants.AppController.IdentityController.ResetPassword)]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        _logger.LogInformation($"Resetting password for user with email: {request.Email}");
+
+        var result = await _userService.ResetPasswordAsync(request.Email, request.Password, request.ConfirmPassword, request.Token);
+
+        if (result.Succeeded)
+        {
+            return Ok(new ResetPasswordResponse
+            {
+                StatusCode = StatusCodes.Status200OK,
+                Success = "true",
+                Message = AppResponses.ResetPasswordResponses.PasswordReset,
+            });
+        }
+
+        var errors = result.Errors.ToDictionary(e => e.Code, e => e.Description);
+
+        if (result.Errors == AppIdentityErrors.UnknownError)
+        {
+            errors.Add("summary", AppIdentityErrors.UnknownError.Description);
+
+            return StatusCode(StatusCodes.Status500InternalServerError, new ResetPasswordResponse
+            {
+                StatusCode = StatusCodes.Status500InternalServerError,
+                Success = "false",
+                Message = AppResponses.ResetPasswordResponses.UnexpectedError,
+                Errors = errors
+            });
+        }
+
+        return BadRequest(new ResetPasswordResponse
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Success = "false",
+            Message = AppResponses.ResetPasswordResponses.PasswordNotReset,
+            Errors = errors
         });
     }
 }
