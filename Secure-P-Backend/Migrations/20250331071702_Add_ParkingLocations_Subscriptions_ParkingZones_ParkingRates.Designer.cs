@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Secure_P_Backend.Data;
 
@@ -11,9 +12,11 @@ using Secure_P_Backend.Data;
 namespace Secure_P_Backend.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250331071702_Add_ParkingLocations_Subscriptions_ParkingZones_ParkingRates")]
+    partial class Add_ParkingLocations_Subscriptions_ParkingZones_ParkingRates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
