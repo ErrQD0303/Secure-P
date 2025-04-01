@@ -5,15 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Secure_P_Backend.Data;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    [Migration("20250321060406_Modify_Users_Remove_LicensePlate")]
-    partial class Modify_Users_Remove_LicensePlate
+    [Migration("20250322080330_FixDateOfBirthDataTypes")]
+    partial class FixDateOfBirthDataTypes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,9 +168,8 @@ namespace Secure_P_Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("DayOfBirth")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<DateTime>("DayOfBirth")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)

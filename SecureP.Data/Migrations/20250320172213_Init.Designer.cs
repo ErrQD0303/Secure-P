@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Secure_P_Backend.Data;
+using SecureP.Data;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
     [Migration("20250320172213_Init")]

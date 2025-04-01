@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Add_ParkingLocations_Subscriptions_ParkingZones_ParkingRates : Migration

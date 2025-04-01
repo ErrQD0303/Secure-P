@@ -5,15 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Secure_P_Backend.Data;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    [Migration("20250322080330_FixDateOfBirthDataTypes")]
-    partial class FixDateOfBirthDataTypes
+    [Migration("20250401110655_MoveDataFolder")]
+    partial class MoveDataFolder
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -106,12 +105,10 @@ namespace Secure_P_Backend.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderKey")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
@@ -155,6 +152,9 @@ namespace Secure_P_Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AddressLine2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Avatar")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
@@ -246,18 +246,83 @@ namespace Secure_P_Backend.Migrations
                     b.ToTable("UserLicensePlates", "Identity");
                 });
 
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("ChangeSignageFee")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.Property<double>("ClampingFee")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.Property<string>("Discriminator")
+                        .IsRequired()
+                        .HasMaxLength(89)
+                        .HasColumnType("nvarchar(89)");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPaid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LicensePlate")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ParkingLocationId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ParkingZoneId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("PaymentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ProductType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("SubscriptionFee")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserParkingSubscriptions", "Identity");
+
+                    b.HasDiscriminator().HasValue("AppUserParkingSubscription<string, string, string, string>");
+
+                    b.UseTphMappingStrategy();
+                });
+
             modelBuilder.Entity("SecureP.Identity.Models.AppUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("LoginProvider")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("ExpiryDate")
                         .HasColumnType("datetime2");
@@ -268,6 +333,104 @@ namespace Secure_P_Backend.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", "Identity");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocation<string>", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int>("AvailableSpaces")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Capacity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ParkingLocations", "Identity");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
+                {
+                    b.Property<string>("ParkingLocationId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<double>("DailyRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.Property<double>("HourlyRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.Property<double>("MonthlyRate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("float")
+                        .HasDefaultValue(0.0);
+
+                    b.HasKey("ParkingLocationId");
+
+                    b.ToTable("ParkingRates", "Identity");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingZone<string>", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AvailableSpaces")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Capacity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ParkingLocationId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParkingLocationId");
+
+                    b.ToTable("ParkingZones", "Identity");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
+                {
+                    b.HasBaseType("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>");
+
+                    b.HasIndex("ParkingLocationId");
+
+                    b.HasIndex("ParkingZoneId");
+
+                    b.ToTable("UserParkingSubscriptions", "Identity");
+
+                    b.HasDiscriminator().HasValue("AppUserParkingSubscription<string>");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -323,6 +486,16 @@ namespace Secure_P_Backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SecureP.Identity.Models.AppUserToken<string>", b =>
                 {
                     b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
@@ -334,11 +507,65 @@ namespace Secure_P_Backend.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.ParkingLocation<string>", "ParkingLocation")
+                        .WithOne("ParkingRate")
+                        .HasForeignKey("SecureP.Identity.Models.ParkingRate<string>", "ParkingLocationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ParkingLocation");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingZone<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.ParkingLocation<string>", "ParkingLocation")
+                        .WithMany("ParkingZones")
+                        .HasForeignKey("ParkingLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ParkingLocation");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.ParkingLocation<string>", "ParkingLocation")
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("ParkingLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SecureP.Identity.Models.ParkingZone<string>", "ParkingZone")
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("ParkingZoneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ParkingLocation");
+
+                    b.Navigation("ParkingZone");
+                });
+
             modelBuilder.Entity("SecureP.Identity.Models.AppUser<string>", b =>
                 {
                     b.Navigation("UserLicensePlates");
 
+                    b.Navigation("UserParkingSubscriptions");
+
                     b.Navigation("UserTokens");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocation<string>", b =>
+                {
+                    b.Navigation("ParkingRate");
+
+                    b.Navigation("ParkingZones");
+
+                    b.Navigation("UserParkingSubscriptions");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingZone<string>", b =>
+                {
+                    b.Navigation("UserParkingSubscriptions");
                 });
 #pragma warning restore 612, 618
         }

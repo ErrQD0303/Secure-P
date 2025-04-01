@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SecureP.Identity.Models;
 using SecureP.Shared;
 
-namespace Secure_P_Backend.Data;
+namespace SecureP.Data;
 
 public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<TKey>, TKey, IdentityUserClaim<TKey>,
     IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, AppUserToken<TKey>>

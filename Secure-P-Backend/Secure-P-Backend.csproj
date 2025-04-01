@@ -30,6 +30,7 @@
     <ProjectReference Include="..\SecureP.Service.UserService\SecureP.Service.UserService.csproj" />
     <ProjectReference Include="..\SecureP.Service.EmailService\SecureP.Service.EmailService.csproj" />
     <ProjectReference Include="..\SecureP.Service.UploadService\SecureP.Service.UploadService.csproj" />
+    <ProjectReference Include="..\SecureP.Data\SecureP.Data.csproj" />
   </ItemGroup>
 
 </Project>

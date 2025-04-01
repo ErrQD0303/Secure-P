@@ -5,15 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Secure_P_Backend.Data;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    [Migration("20250326071734_AddAvatarUrl")]
-    partial class AddAvatarUrl
+    [Migration("20250324055550_UpdateAppUserSchema")]
+    partial class UpdateAppUserSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -155,9 +154,6 @@ namespace Secure_P_Backend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AddressLine2")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Avatar")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")

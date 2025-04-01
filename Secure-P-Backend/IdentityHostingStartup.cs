@@ -3,9 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using SecureP.Identity.Models;
 using SecureP.Service.TokenService.Extensions;
 using SecureP.Service.UserService.Extensions;
+using SecureP.Data;
 
-[assembly: HostingStartup(typeof(Secure_P_Backend.Data.IdentityHostingStartup))]
-namespace Secure_P_Backend.Data;
+[assembly: HostingStartup(typeof(Secure_P_Backend.IdentityHostingStartup))]
+namespace Secure_P_Backend;
 
 public class IdentityHostingStartup : IHostingStartup
 {

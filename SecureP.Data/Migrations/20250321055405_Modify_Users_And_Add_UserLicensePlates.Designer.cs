@@ -5,15 +5,14 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Secure_P_Backend.Data;
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    [Migration("20250324055550_UpdateAppUserSchema")]
-    partial class UpdateAppUserSchema
+    [Migration("20250321055405_Modify_Users_And_Add_UserLicensePlates")]
+    partial class Modify_Users_And_Add_UserLicensePlates
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -169,8 +168,9 @@ namespace Secure_P_Backend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DayOfBirth")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("DayOfBirth")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -180,6 +180,10 @@ namespace Secure_P_Backend.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LicensePlateNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

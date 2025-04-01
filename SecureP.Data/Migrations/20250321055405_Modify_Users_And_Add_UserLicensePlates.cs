@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace Secure_P_Backend.Migrations
+namespace SecureP.Data.Migrations
 {
     /// <inheritdoc />
     public partial class Modify_Users_And_Add_UserLicensePlates : Migration

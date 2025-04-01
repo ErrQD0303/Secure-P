@@ -103,5 +103,10 @@ public static class AppConstants
             public const string DefaultRoute = "Upload";
             public const string UploadAvatar = "avatar";
         }
+
+        public class ParkingLocationController
+        {
+            public const string DefaultRoute = "parking-location";
+        }
     }
 }
