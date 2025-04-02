@@ -86,25 +86,25 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         if (string.IsNullOrWhiteSpace(model.Name))
         {
             validationResult.Success = false;
-            validationResult.Errors.Add("Name", "Parking location name is required.");
+            validationResult.Errors.Add("name", "Parking location name is required.");
         }
 
         if (string.IsNullOrWhiteSpace(model.Address))
         {
             validationResult.Success = false;
-            validationResult.Errors.Add("Address", "Parking location address is required.");
+            validationResult.Errors.Add("address", "Parking location address is required.");
         }
 
         if (model.Capacity <= 0)
         {
             validationResult.Success = false;
-            validationResult.Errors.Add("Capacity", "Parking location capacity must be greater than zero.");
+            validationResult.Errors.Add("capacity", "Parking location capacity must be greater than zero.");
         }
 
         if (model.AvailableSpaces < 0)
         {
             validationResult.Success = false;
-            validationResult.Errors.Add("AvailableSpaces", "Parking location available spaces cannot be negative.");
+            validationResult.Errors.Add("available_spaces", "Parking location available spaces cannot be negative.");
         }
 
         return validationResult.Success;
