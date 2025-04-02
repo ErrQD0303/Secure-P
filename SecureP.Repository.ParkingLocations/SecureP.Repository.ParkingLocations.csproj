@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SecureP.Repository.Abstraction\SecureP.Repository.Abstraction.csproj" />
+    <ProjectReference Include="..\SecureP.Data\SecureP.Data.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

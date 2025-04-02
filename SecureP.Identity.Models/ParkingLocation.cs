@@ -11,6 +11,9 @@ public class ParkingLocation<TKey> where TKey : IEquatable<TKey>
     public virtual int Capacity { get; set; } = default!;
     public virtual int AvailableSpaces { get; set; } = default!;
 
+    // Concurrency token
+    public virtual string? ConcurrencyStamp { get; set; } = Guid.NewGuid().ToString();
+
     // Navigation properties
     public virtual ParkingRate<TKey>? ParkingRate { get; set; } = default!;
     public virtual ICollection<ParkingZone<TKey>> ParkingZones { get; set; } = default!;

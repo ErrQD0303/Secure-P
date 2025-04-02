@@ -76,6 +76,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
             b.Property(pl => pl.Address).HasMaxLength(512);
             b.Property(pl => pl.AvailableSpaces).HasDefaultValue(0);
             b.Property(pl => pl.Capacity).HasDefaultValue(0);
+            b.Property(pl => pl.ConcurrencyStamp).IsConcurrencyToken();
         });
 
         builder.Entity<ParkingRate<TKey>>(b =>

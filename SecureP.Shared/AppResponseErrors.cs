@@ -48,4 +48,22 @@ public class AppResponseErrors
             } }
         };
     }
+
+    public class CreateParkingLocationErrors
+    {
+        public static Dictionary<string, string> CreateParkingLocationFailed => new()
+        {
+            { "name", "Parking location name is required" },
+            { "address", "Parking location address is required" },
+            { "capacity", "Parking location capacity is required" }
+        };
+    }
+
+    public class UpdateParkingLocationErrors
+    {
+        public static Dictionary<string, string> UpdateParkingLocationFailed => new()
+        {
+            {"summary", "Request body cannot be empty"}
+        };
+    }
 }

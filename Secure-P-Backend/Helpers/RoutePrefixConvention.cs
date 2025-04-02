@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Mvc.ApplicationModels;
-using Microsoft.AspNetCore.Mvc.Routing;
-
 namespace Secure_P_Backend.Helpers;
 
 public class RoutePrefixConvention : IApplicationModelConvention

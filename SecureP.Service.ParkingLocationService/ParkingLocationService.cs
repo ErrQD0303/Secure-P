@@ -1,8 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using SecureP.Identity.Models;
+using SecureP.Identity.Models.Dto;
+using SecureP.Identity.Models.Dto.SortModels;
+using SecureP.Identity.Models.Result;
+using SecureP.Repository.Abstraction;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Service.ParkingLocationService.Mappers;
 
 namespace SecureP.Service.ParkingLocationService;
 
@@ -10,34 +14,37 @@ public class ParkingLocationService<TKey> : IParkingLocationService<TKey>
     where TKey : IEquatable<TKey>
 {
     private readonly ILogger<ParkingLocationService<TKey>> _logger;
+    private readonly IParkingLocationRepository<TKey> _parkingLocationRepository;
 
-    public ParkingLocationService(ILogger<ParkingLocationService<TKey>> logger)
+    public ParkingLocationService(ILogger<ParkingLocationService<TKey>> logger,
+        IParkingLocationRepository<TKey> parkingLocationRepository)
     {
+        _parkingLocationRepository = parkingLocationRepository;
         _logger = logger;
     }
 
-    public Task<bool> CreateParkingLocationAsync(AddNewParkingLocationRequest request)
+    public Task<(ValidationResult, ParkingLocation<TKey>?)> CreateParkingLocationAsync(CreateParkingLocationRequest request)
     {
-
+        return _parkingLocationRepository.CreateParkingLocationAsync(request.ToCreateParkingLocationDto());
     }
 
-    public Task DeleteParkingLocationAsync(TKey id)
+    public Task<bool> DeleteParkingLocationAsync(TKey id)
     {
-        throw new NotImplementedException();
+        return _parkingLocationRepository.DeleteParkingLocationAsync(id);
     }
 
-    public Task<ParkingLocation<TKey>> GetParkingLocationByIdAsync(TKey id)
+    public Task<GetParkingLocationDto<TKey>?> GetParkingLocationByIdAsync(TKey id)
     {
-        throw new NotImplementedException();
+        return _parkingLocationRepository.GetParkingLocationByIdAsync(id);
     }
 
-    public Task<IEnumerable<ParkingLocation<TKey>>> GetParkingLocationsAsync()
+    public Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int pageIndex, int pageSize, ParkingLocationOrderBy orderBy, bool desc)
     {
-        throw new NotImplementedException();
+        return _parkingLocationRepository.GetParkingLocationsAsync(pageIndex, pageSize, orderBy, desc);
     }
 
-    public Task<bool> UpdateParkingLocationAsync(TKey id, AddNewParkingLocationRequest request)
+    public Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationRequest request)
     {
-        throw new NotImplementedException();
+        return _parkingLocationRepository.UpdateParkingLocationAsync(id, request.ToUpdateParkingLocationDto());
     }
 }

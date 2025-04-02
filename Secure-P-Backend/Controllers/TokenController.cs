@@ -1,12 +1,3 @@
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using SecureP.Service.Abstraction;
-using SecureP.Service.Abstraction.Entities;
-using SecureP.Shared;
-using SecureP.Shared.Configures;
-using YamlDotNet.Core.Tokens;
-
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]

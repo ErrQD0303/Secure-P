@@ -1,20 +1,3 @@
-using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Server.Kestrel.Core.Internal.Http;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using NSwag;
-using NSwag.Generation.Processors.Security;
-using Secure_P_Backend.CORS.Extensions;
-using Secure_P_Backend.Helpers.Extensions;
-using SecureP.Identity.Models;
-using SecureP.Service.EmailService.Extensions;
-using SecureP.Service.TokenService.Extensions;
-using SecureP.Service.UploadService.Extensions;
-using SecureP.Shared;
-using SecureP.Shared.Configures;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();

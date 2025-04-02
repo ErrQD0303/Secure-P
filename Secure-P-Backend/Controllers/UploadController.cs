@@ -1,14 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using SecureP.Service.Abstraction;
-using SecureP.Service.Abstraction.Entities;
-using SecureP.Shared;
-
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]

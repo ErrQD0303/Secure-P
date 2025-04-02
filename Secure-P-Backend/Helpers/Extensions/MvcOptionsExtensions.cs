@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
-
 namespace Secure_P_Backend.Helpers.Extensions;
 
 public static class MvcOptionsExtensions

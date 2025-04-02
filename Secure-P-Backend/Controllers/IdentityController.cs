@@ -1,18 +1,3 @@
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.Options;
-using SecureP.Identity.Models;
-using SecureP.Service.Abstraction;
-using SecureP.Service.Abstraction.Entities;
-using SecureP.Service.Abstraction.Exceptions;
-using SecureP.Shared;
-using SecureP.Shared.Configures;
-using SecureP.Shared.Mappers;
-
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]

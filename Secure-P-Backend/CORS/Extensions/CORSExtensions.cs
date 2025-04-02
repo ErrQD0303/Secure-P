@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace Secure_P_Backend.CORS.Extensions;
 
 public static class CORSExtensions
