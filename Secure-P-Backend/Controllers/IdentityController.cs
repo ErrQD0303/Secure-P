@@ -1,8 +1,10 @@
+using SecureP.Identity.Models.Enum;
+using SecureP.Identity.Models; // Ensure this namespace is imported
+
 namespace Secure_P_Backend.Controllers;
 
 [ApiController]
 [Route(AppConstants.AppController.IdentityController.DefaultRoute)]
-[Authorize]
 public class IdentityController : ControllerBase
 {
     private readonly ILogger<IdentityController> _logger;
@@ -75,6 +77,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost(AppConstants.AppController.IdentityController.Logout)]
+    [Authorize]
     public async Task<IActionResult> Logout()
     {
         _logger.LogInformation($"Logging out user with email: {User.FindFirstValue(ClaimTypes.Email)}");
@@ -140,7 +143,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpGet(AppConstants.AppController.IdentityController.GetUserInfo)]
-    [DisableRateLimiting]
+    [Authorize(Policy = AppPolicy.GetInfo)] // Ensure RoleClaimType is defined in SecureP.Identity.Models
     public async Task<IActionResult> GetUserInfo()
     {
         _logger.LogInformation($"Getting user info for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
@@ -391,7 +394,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpGet(AppConstants.AppController.IdentityController.AdminUser.GetUser)]
-    // [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPolicy.ReadUser)]
     public async Task<IActionResult> GetUser([FromRoute] string id)
     {
         var user = await _userService.GetUserByIdAsync(id);
@@ -406,6 +409,7 @@ public class IdentityController : ControllerBase
 
     [HttpGet(AppConstants.AppController.IdentityController.AdminUser.GetAllUser)]
     // [Authorize(Roles = "Admin")]
+    [Authorize(Policy = AppPolicy.ReadUser)]
     public async Task<IActionResult> GetUsers()
     {
         var users = (await _userService.GetUsersAsync())
@@ -415,6 +419,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPut(AppConstants.AppController.IdentityController.UpdateProfile)]
+    [Authorize(Policy = AppPolicy.UpdateProfile)] // Ensure RoleClaimType is defined in SecureP.Identity.Models
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
     {
         _logger.LogInformation($"Updating profile for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
@@ -451,6 +456,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPut(AppConstants.AppController.IdentityController.ChangePassword)]
+    [Authorize(Policy = AppPolicy.ChangePassword)] // Ensure RoleClaimType is defined in SecureP.Identity.Models
     public async Task<IActionResult> ChangePassword([FromBody] UpdatePasswordRequest request)
     {
         _logger.LogInformation($"Changing password for user with email: {User.FindFirstValue(ClaimTypes.Email)}");
@@ -510,8 +516,8 @@ public class IdentityController : ControllerBase
         });
     }
 
-    [HttpPost(AppConstants.AppController.IdentityController.ForgotPassword)]
     [AllowAnonymous]
+    [HttpPost(AppConstants.AppController.IdentityController.ForgotPassword)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
     {
         _logger.LogInformation($"Sending forgot password email to user with email: {request.Email}");

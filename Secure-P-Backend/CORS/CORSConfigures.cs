@@ -1,10 +1,10 @@
-namespace Secure_P_Backend.CORS;
+namespace Secure_P_Backend.Cors;
 
-public class CORSConfigures
+public class CorsConfigures
 {
-    public List<CORSOrigin>? Origins { get; set; }
+    public List<CorsOrigin>? Origins { get; set; }
 
-    public class CORSOrigin
+    public class CorsOrigin
     {
         public string? Name { get; set; }
         public string? Origins { get; set; }

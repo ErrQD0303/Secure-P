@@ -1,10 +1,12 @@
-namespace Secure_P_Backend.CORS.Extensions;
+using Secure_P_Backend.Cors.Extensions;
 
-public static class CORSExtensions
+namespace Secure_P_Backend.Cors.Extensions;
+
+public static class CorsExtensions
 {
-    public static WebApplication UseCORS(this WebApplication app)
+    public static WebApplication UseCors(this WebApplication app)
     {
-        var CORSConfig = app.Services.GetRequiredService<IOptions<CORSConfigures>>().Value;
+        var CORSConfig = app.Services.GetRequiredService<IOptions<CorsConfigures>>().Value;
         foreach (var origin in CORSConfig?.Origins ?? [])
         {
             if (!string.IsNullOrEmpty(origin.Name) && !string.IsNullOrEmpty(origin.Origins))

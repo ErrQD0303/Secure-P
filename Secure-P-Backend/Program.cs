@@ -1,59 +1,15 @@
+using Secure_P_Backend.Cors.Extensions;
+using SecureP.Data.Seed;
+
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddControllers(o =>
-{
-    o.UseRoutePrefix(AppConstants.DefaultRoutePrefix);
-});
-
-builder.Services.Configure<CookiePolicyOptions>(options =>
-{
-    options.MinimumSameSitePolicy = SameSiteMode.None;
-    options.ConsentCookieValue = "true";
-    options.CheckConsentNeeded = context => AppConstants.EnableGDPR;
-    options.ConsentCookie = new CookieBuilder
-    {
-        Name = AppConstants.DefaultLoginProvider + "_ConsentCookie",
-        Expiration = TimeSpan.FromDays(90),
-        IsEssential = true,
-        SameSite = SameSiteMode.None,
-        SecurePolicy = CookieSecurePolicy.Always,
-        HttpOnly = false
-    };
-});
-
-builder.Services.AddEmailService(builder.Configuration);
-builder.Services.AddUploadService<string>();
-
-builder.Services.AddOpenApiDocument(options =>
-{
-    options.Title = "Secure-P Backend";
-    options.Version = "v1";
-    options.Description = "Secure-P Backend API";
-    options.DocumentName = "v1";
-
-    options.AddSecurity("JWT", new NSwag.OpenApiSecurityScheme
-    {
-        Type = OpenApiSecuritySchemeType.ApiKey,
-        Name = Microsoft.Net.Http.Headers.HeaderNames.Authorization,
-        In = OpenApiSecurityApiKeyLocation.Header,
-        Description = "Type into the textbox: Bearer {your JWT token}.",
-        BearerFormat = "JWT",
-        Scheme = "bearer",
-    });
-
-    options.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("JWT"));
-});
-
-builder.Services.Configure<JwtConfigures>(builder.Configuration.GetSection("Jwt")); // Configure JWT settings
-var jwtConfigures = builder.Configuration.GetSection("Jwt").Get<JwtConfigures>();
+// Services are registered in the ConfigureServices method inside Startup foldersservices.Configure<JwtConfigures>(context.Configuration.GetSection(AppConstants.JwtConfiguresSection)); // Configure JWT settings
+builder.Services.Configure<JwtConfigures>(builder.Configuration.GetSection(AppConstants.JwtConfiguresSection)); // Configure JWT settings
+var jwtConfigures = builder.Configuration.GetSection(AppConstants.JwtConfiguresSection).Get<JwtConfigures>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
-        /* options.Authority = jwtConfigures?.Authority ?? throw new InvalidOperationException("Authority is missing");
-        options.Audience = jwtConfigures?.Audience ?? throw new InvalidOperationException("Audience is missing"); */
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -83,13 +39,21 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var defaultPW = builder.Configuration["defaultPW"] ?? string.Empty;
+    await SeedData<string>.InitializeAsync(services, defaultPW);
+}
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCookiePolicy();
 
-app.UseCORS();
-
 app.UseRouting(); // Add routing middleware
+
+app.UseCors();
 
 app.UseAuthentication(); // Add authentication middleware
 app.UseAuthorization(); // Add authorization middleware

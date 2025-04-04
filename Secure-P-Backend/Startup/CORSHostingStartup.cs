@@ -1,5 +1,5 @@
-[assembly: HostingStartup(typeof(Secure_P_Backend.CORS.CORSHostingStartup))]
-namespace Secure_P_Backend.CORS;
+[assembly: HostingStartup(typeof(Secure_P_Backend.Startup.CORSHostingStartup))]
+namespace Secure_P_Backend.Startup;
 
 public class CORSHostingStartup : IHostingStartup
 {
@@ -8,14 +8,14 @@ public class CORSHostingStartup : IHostingStartup
         builder.ConfigureServices((context, services) =>
         {
             // Bind CORS configuration from appsettings.json
-            services.Configure<CORSConfigures>(config =>
+            services.Configure<CorsConfigures>(config =>
             {
-                config.Origins = context.Configuration.GetSection("CORS").Get<List<CORSConfigures.CORSOrigin>>();
+                config.Origins = context.Configuration.GetSection("CORS").Get<List<CorsConfigures.CorsOrigin>>();
             });
 
-            var corsConfig = new CORSConfigures
+            var corsConfig = new CorsConfigures
             {
-                Origins = context.Configuration.GetSection("CORS").Get<List<CORSConfigures.CORSOrigin>>()
+                Origins = context.Configuration.GetSection("CORS").Get<List<CorsConfigures.CorsOrigin>>()
             };
 
             services.AddCors(options =>
