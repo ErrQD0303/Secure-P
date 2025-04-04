@@ -8,6 +8,11 @@ public static class AppConstants
     public const bool EnableGDPR = true;
     public const string ImagesFolder = "images";
     public const string UserAvatarFolder = ImagesFolder + "/" + "user-avatar";
+    public const string JwtConfiguresSection = "Jwt";
+    public const string DefaultAdminEmail = "admin@SecureP.com";
+    public const string DefaultAdminPassword = "Admin@123";
+    public const string DefaultNormalUserEmail = "user@SecureP.com";
+    public const string DefaultNormalUserPassword = "Admin@123";
 
     public class IdentityEntityFrameworkCoreConstants
     {

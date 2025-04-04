@@ -7,13 +7,13 @@ namespace SecureP.Service.TokenService;
 
 public class JwtGenerator
 {
-    public static string GenerateJWTToken(string issuer, string audience, string? nonce, int expirySeconds, IEnumerable<Claim> claims, JsonWebKey jwk)
+    public static string GenerateJWTToken(string issuer, string audience, string? nonce, int expirySeconds, IEnumerable<Claim> claims, JsonWebKey jwk, Dictionary<string, object>? additionalClaims = null)
     {
         var signingCredentials = new SigningCredentials(jwk, SecurityAlgorithms.HmacSha256);
 
         var jwtHeader = new JwtHeader(signingCredentials);
 
-        var additionalClaims = new Dictionary<string, object>();
+        additionalClaims ??= [];
 
         if (!string.IsNullOrEmpty(nonce))
         {

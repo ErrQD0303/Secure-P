@@ -21,6 +21,12 @@ where TKey : IEquatable<TKey> where TUserPS : IEquatable<TUserPS> where TParking
 
     public virtual ICollection<AppUserToken<TKey>> UserTokens
     { get; set; } = default!;
+    public virtual ICollection<AppUserLogin<TKey>> UserLogins
+    { get; set; } = default!;
+    public virtual ICollection<AppUserRole<TKey>> UserRoles
+    { get; set; } = default!;
+    public virtual ICollection<AppUserClaim<TKey>> UserClaims
+    { get; set; } = default!;
     public virtual ICollection<AppUserLicensePlate<TKey>> UserLicensePlates
     { get; set; } = default!;
     public virtual ICollection<AppUserParkingSubscription<TUserPS, TKey, TParkingLocation, TParkingZone>> UserParkingSubscriptions

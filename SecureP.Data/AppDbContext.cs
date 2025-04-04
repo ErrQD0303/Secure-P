@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SecureP.Identity.Models;
 using SecureP.Shared;
+using SecureP.Shared.Mappers;
 
 namespace SecureP.Data;
 
-public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<TKey>, TKey, IdentityUserClaim<TKey>,
-    IdentityUserRole<TKey>, IdentityUserLogin<TKey>, IdentityRoleClaim<TKey>, AppUserToken<TKey>>
+public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>, TKey, AppUserClaim<TKey>,
+    AppUserRole<TKey>, AppUserLogin<TKey>, AppRoleClaim<TKey>, AppUserToken<TKey>>
     where TKey : IEquatable<TKey>
 {
     public AppDbContext(DbContextOptions<AppDbContext<TKey>> options) : base(options)
@@ -31,6 +31,25 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
                 .WithOne(ups => ups.User)
                 .HasForeignKey(ups => ups.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            b.HasMany(uc => uc.UserClaims)
+                .WithOne(u => u.User)
+                .HasForeignKey(uc => uc.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+        });
+
+        builder.Entity<AppRole<TKey>>(b =>
+        {
+        });
+
+        builder.Entity<AppUserLogin<TKey>>(b =>
+        {
+            b.HasOne(ul => ul.User)
+                .WithMany(u => u.UserLogins)
+                .HasForeignKey(ul => ul.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
         });
 
         builder.Entity<AppUserToken<TKey>>(b =>
@@ -40,6 +59,36 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, IdentityRole<
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired();
+        });
+
+        builder.Entity<AppRoleClaim<TKey>>(b =>
+        {
+            b.HasOne(ur => ur.Role)
+                .WithMany(r => r.RoleClaims)
+                .HasForeignKey(ur => ur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.Property(rc => rc.ClaimValue).HasConversion<int>();
+        });
+
+        builder.Entity<AppUserRole<TKey>>(b =>
+        {
+            b.HasOne(ur => ur.User)
+                .WithMany(u => u.UserRoles)
+                .HasForeignKey(ur => ur.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+
+            b.HasOne(ur => ur.Role)
+                .WithMany(r => r.UserRoles)
+                .HasForeignKey(ur => ur.RoleId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+        });
+
+        builder.Entity<AppUserClaim<TKey>>(b =>
+        {
         });
 
         builder.Entity<AppUserLicensePlate<TKey>>(b =>

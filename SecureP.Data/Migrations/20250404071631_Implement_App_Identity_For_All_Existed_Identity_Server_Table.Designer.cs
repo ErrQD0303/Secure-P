@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SecureP.Data;
 
@@ -11,9 +12,11 @@ using SecureP.Data;
 namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250404071631_Implement_App_Identity_For_All_Existed_Identity_Server_Table")]
+    partial class Implement_App_Identity_For_All_Existed_Identity_Server_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,8 +64,8 @@ namespace SecureP.Data.Migrations
                     b.Property<string>("ClaimType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ClaimValue")
-                        .HasColumnType("int");
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
