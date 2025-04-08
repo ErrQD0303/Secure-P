@@ -11,7 +11,10 @@ public class DbStorageHostingStartup : IHostingStartup
                 options.UseSqlServer(
                     context.Configuration.GetConnectionString("SqlServer")));
 
-            services.AddDefaultIdentity<AppUser<string>>(options => options.SignIn.RequireConfirmedAccount = false)
+            services.AddDefaultIdentity<AppUser<string>>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+            })
                 .AddRoles<AppRole<string>>()
                 .AddEntityFrameworkStores<AppDbContext<string>>()
                 .AddDefaultTokenProviders();

@@ -358,6 +358,7 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost(AppConstants.AppController.IdentityController.ResendEmailConfirmation)]
+    [Authorize(Policy = AppPolicy.ResendEmailConfirmation)] // Ensure RoleClaimType is defined in SecureP.Identity.Models
     public async Task<IActionResult> ResendConfirmationEmail(ResendConfirmEmailRequest request)
     {
         _logger.LogInformation($"Resending confirmation email to user with email: {request.Email}");

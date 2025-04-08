@@ -6,6 +6,7 @@ namespace Secure_P_Backend.Controllers;
 
 [ApiController]
 [Route(AppConstants.AppController.ParkingLocationController.DefaultRoute)]
+[Authorize]
 public class ParkingLocationController : ControllerBase
 {
     private readonly ILogger<ParkingLocationController> _logger;
@@ -18,6 +19,7 @@ public class ParkingLocationController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = AppPolicy.CreateParkingLocation)]
     public async Task<IActionResult> CreateParkingLocation([FromBody] CreateParkingLocationRequest request)
     {
         // Logic to create a parking location
@@ -56,6 +58,7 @@ public class ParkingLocationController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Policy = AppPolicy.ReadParkingLocation)]
     public async Task<IActionResult> GetParkingLocationById(string id)
     {
         // Logic to get a parking location by ID
@@ -83,14 +86,15 @@ public class ParkingLocationController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAllParkingLocations([FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 10, [FromQuery] ParkingLocationOrderBy orderBy = ParkingLocationOrderBy.Name, [FromQuery] bool desc = false)
+    [Authorize(Policy = AppPolicy.ReadParkingLocation)]
+    public async Task<IActionResult> GetAllParkingLocations([FromQuery] int page = 1, [FromQuery] int limit = 10, [FromQuery] ParkingLocationOrderBy sort = ParkingLocationOrderBy.Name, [FromQuery] bool desc = false, [FromQuery] string? search = null)
     {
         // Logic to get all parking locations
         _logger.LogInformation("Getting all parking locations from the database");
 
-        var parkingLocations = await _parkingLocationService.GetParkingLocationsAsync(pageIndex, pageSize, orderBy, desc);
+        var parkingLocations = await _parkingLocationService.GetParkingLocationsAsync(page, limit, sort, desc, search);
 
-        if (parkingLocations == null || !parkingLocations.Any())
+        if (parkingLocations == null || parkingLocations.Items.Count == 0)
         {
             return NotFound(new GetAllParkingLocationResponse<string>
             {
@@ -110,6 +114,7 @@ public class ParkingLocationController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Policy = AppPolicy.UpdateParkingLocation)]
     public async Task<IActionResult> UpdateParkingLocation(string id, [FromBody] UpdateParkingLocationRequest request)
     {
         // Logic to update a parking location
@@ -148,6 +153,7 @@ public class ParkingLocationController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Policy = AppPolicy.DeleteParkingLocation)]
     public async Task<IActionResult> DeleteParkingLocation(string id)
     {
         // Logic to delete a parking location

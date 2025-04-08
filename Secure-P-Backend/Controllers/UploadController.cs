@@ -13,6 +13,7 @@ public class UploadController : ControllerBase
     }
 
     [HttpPost(AppConstants.AppController.UploadController.UploadAvatar)]
+    [Authorize(Policy = AppPolicy.ChangeAvatar)]
     public async Task<IActionResult> UploadAvatar([FromForm] UploadAvatarRequest request)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
