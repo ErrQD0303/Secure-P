@@ -38,9 +38,9 @@ public class ParkingLocationService<TKey> : IParkingLocationService<TKey>
         return _parkingLocationRepository.GetParkingLocationByIdAsync(id);
     }
 
-    public Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int pageIndex, int pageSize, ParkingLocationOrderBy orderBy, bool desc)
+    public Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int page, int limit, ParkingLocationOrderBy sort, bool desc, string? search = null)
     {
-        return _parkingLocationRepository.GetParkingLocationsAsync(pageIndex, pageSize, orderBy, desc);
+        return _parkingLocationRepository.GetParkingLocationsAsync(page, limit, sort, desc, search);
     }
 
     public Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationRequest request)

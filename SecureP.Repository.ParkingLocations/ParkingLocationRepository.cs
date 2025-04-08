@@ -41,7 +41,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             Name = parkingLocation.Name,
             Address = parkingLocation.Address,
             Capacity = parkingLocation.Capacity,
-            AvailableSpaces = parkingLocation.AvailableSpaces,
+            AvailableSpaces = parkingLocation.AvailableSpaces == 0 ? parkingLocation.Capacity : parkingLocation.AvailableSpaces,
             ParkingRate = new ParkingRate<TKey>
             {
                 HourlyRate = parkingLocation.ParkingRate?.HourlyRate ?? 0,
@@ -149,34 +149,39 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         return parkingLocation.ToGetParkingLocationDto();
     }
 
-    public async Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int pageIndex = 1, int pageSize = 10, ParkingLocationOrderBy orderBy = ParkingLocationOrderBy.Name, bool desc = false)
+    public async Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int page = 1, int limit = 10, ParkingLocationOrderBy sort = ParkingLocationOrderBy.Name, bool desc = false, string? search = null)
     {
-        _logger.LogInformation($"GetParkingLocationsAsync: Fetching all parking locations with pagination. PageIndex: {pageIndex}, PageSize: {pageSize}.");
+        _logger.LogInformation($"GetParkingLocationsAsync: Fetching all parking locations with pagination. PageIndex: {page}, PageSize: {limit}.");
 
-        pageIndex = pageIndex < 1 ? 0 : pageIndex - 1; // Adjust for zero-based index
+        page = page < 1 ? 0 : page - 1; // Adjust for zero-based index
 
-        if (pageIndex < 0 || pageSize <= 0)
+        if (page < 0 || limit <= 0)
         {
             _logger.LogWarning("GetParkingLocationsAsync: Invalid pagination parameters.");
             return null;
         }
 
         var totalCount = await _context.ParkingLocations.CountAsync();
-        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        var totalPages = (int)Math.Ceiling((double)totalCount / limit);
 
-        if (pageIndex >= totalPages)
+        if (page >= totalPages)
         {
-            _logger.LogWarning($"GetParkingLocationsAsync: Page index {pageIndex} exceeds total pages {totalPages}.");
+            _logger.LogWarning($"GetParkingLocationsAsync: Page index {page} exceeds total pages {totalPages}.");
             return null;
         }
 
         var parkingLocations = _context.ParkingLocations
             .Include(pl => pl.ParkingRate)
-            .Skip(pageIndex * pageSize)
-            .Take(pageSize)
+            .Skip(page * limit)
+            .Take(limit)
             .AsNoTracking();
 
-        switch (orderBy)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            parkingLocations = parkingLocations.Where(p => p.Name.Contains(search) || p.Address.Contains(search));
+        }
+
+        switch (sort)
         {
             case ParkingLocationOrderBy.Name:
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.Name) : parkingLocations.OrderBy(p => p.Name);
@@ -191,7 +196,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.AvailableSpaces) : parkingLocations.OrderBy(p => p.AvailableSpaces);
                 break;
             default:
-                _logger.LogWarning($"GetParkingLocationsAsync: Invalid order by parameter '{orderBy}'. Defaulting to 'name'.");
+                _logger.LogWarning($"GetParkingLocationsAsync: Invalid order by parameter '{sort}'. Defaulting to 'name'.");
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.Name) : parkingLocations.OrderBy(p => p.Name);
                 break;
         }
@@ -210,7 +215,8 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 DailyRate = p.ParkingRate != null ? p.ParkingRate.DailyRate : 0,
                 MonthlyRate = p.ParkingRate != null ? p.ParkingRate.MonthlyRate : 0,
                 ConcurrencyStamp = p.ConcurrencyStamp ?? string.Empty
-            }).ToListAsync()
+            }).ToListAsync(),
+            TotalPages = totalPages,
         };
     }
 
