@@ -24,4 +24,7 @@ public enum ParkingLocationOrderBy
     Address,
     Capacity,
     AvailableSpaces,
+    HourlyRate,
+    DailyRate,
+    MonthlyRate,
 }

@@ -172,8 +172,6 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         var parkingLocations = _context.ParkingLocations
             .Include(pl => pl.ParkingRate)
-            .Skip(page * limit)
-            .Take(limit)
             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -195,11 +193,22 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             case ParkingLocationOrderBy.AvailableSpaces:
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.AvailableSpaces) : parkingLocations.OrderBy(p => p.AvailableSpaces);
                 break;
+            case ParkingLocationOrderBy.HourlyRate:
+                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.HourlyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.HourlyRate);
+                break;
+            case ParkingLocationOrderBy.DailyRate:
+                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.DailyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.DailyRate);
+                break;
+            case ParkingLocationOrderBy.MonthlyRate:
+                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.MonthlyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.MonthlyRate);
+                break;
             default:
                 _logger.LogWarning($"GetParkingLocationsAsync: Invalid order by parameter '{sort}'. Defaulting to 'name'.");
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.Name) : parkingLocations.OrderBy(p => p.Name);
                 break;
         }
+
+        parkingLocations = parkingLocations.Skip(page * limit).Take(limit);
 
         return new GetAllParkingLocationsDto<TKey>
         {
