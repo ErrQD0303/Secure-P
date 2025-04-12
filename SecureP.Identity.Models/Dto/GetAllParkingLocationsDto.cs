@@ -9,4 +9,6 @@ public class GetAllParkingLocationsDto<TKey> where TKey : IEquatable<TKey>
     public List<GetParkingLocationDto<TKey>> Items { get; set; } = [];
     [JsonPropertyName("total_pages")]
     public int TotalPages { get; set; }
+    [JsonPropertyName("total_items")]
+    public int TotalItems { get; set; }
 }

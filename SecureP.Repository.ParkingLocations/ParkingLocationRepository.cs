@@ -161,15 +161,6 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             return null;
         }
 
-        var totalCount = await _context.ParkingLocations.CountAsync();
-        var totalPages = (int)Math.Ceiling((double)totalCount / limit);
-
-        if (page >= totalPages)
-        {
-            _logger.LogWarning($"GetParkingLocationsAsync: Page index {page} exceeds total pages {totalPages}.");
-            return null;
-        }
-
         var parkingLocations = _context.ParkingLocations
             .Include(pl => pl.ParkingRate)
             .AsNoTracking();
@@ -208,9 +199,11 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 break;
         }
 
+        var totalParkingLocations = await parkingLocations.CountAsync();
+
         parkingLocations = parkingLocations.Skip(page * limit).Take(limit);
 
-        return new GetAllParkingLocationsDto<TKey>
+        var returnObject = new GetAllParkingLocationsDto<TKey>
         {
             Items = await parkingLocations
             .Select(p => new GetParkingLocationDto<TKey>
@@ -225,8 +218,18 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 MonthlyRate = p.ParkingRate != null ? p.ParkingRate.MonthlyRate : 0,
                 ConcurrencyStamp = p.ConcurrencyStamp ?? string.Empty
             }).ToListAsync(),
-            TotalPages = totalPages,
+            TotalItems = totalParkingLocations,
         };
+
+        returnObject.TotalPages = (int)Math.Ceiling((double)returnObject.TotalItems / limit);
+
+        if (page >= returnObject.TotalPages)
+        {
+            _logger.LogWarning($"GetParkingLocationsAsync: Page index {page} exceeds total pages {returnObject.TotalPages}.");
+            return null;
+        }
+
+        return returnObject;
     }
 
     public async Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationDto parkingLocation)
