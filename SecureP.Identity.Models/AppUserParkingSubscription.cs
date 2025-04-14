@@ -2,16 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SecureP.Identity.Models;
 
-public class AppUserParkingSubscription<TKey, TUserId, TParkingLocationId, TParkingZoneId>
+public class AppUserParkingSubscription<TKey, TUserId, TParkingLocationRateId, TParkingZoneId>
     where TKey : IEquatable<TKey>
     where TUserId : IEquatable<TUserId>
-    where TParkingLocationId : IEquatable<TParkingLocationId>
+    where TParkingLocationRateId : IEquatable<TParkingLocationRateId>
     where TParkingZoneId : IEquatable<TParkingZoneId>
 {
     [Key]
     public virtual TKey Id { get; set; } = default!;
     public virtual TUserId UserId { get; set; } = default!;
-    public virtual TParkingLocationId ParkingLocationId { get; set; } = default!;
+    public virtual TParkingLocationRateId ParkingLocationRateId { get; set; } = default!;
     public virtual TParkingZoneId ParkingZoneId { get; set; } = default!;
     public virtual ProductType ProductType { get; set; } = default!;
     public virtual DateTime StartDate { get; set; } = default!;
@@ -24,9 +24,8 @@ public class AppUserParkingSubscription<TKey, TUserId, TParkingLocationId, TPark
     public virtual DateTime? PaymentDate { get; set; } = default!;
 
     // Navigation properties
-    public virtual AppUser<TUserId> User { get; set; } = default!;
-    public virtual ParkingLocation<TParkingLocationId> ParkingLocation { get; set; } = default!;
-    public virtual ParkingZone<TParkingZoneId> ParkingZone { get; set; } = default!;
+    public virtual ParkingLocationRate<TParkingLocationRateId> ParkingLocationRate { get; set; } = default!;
+    public virtual AppUser<TUserId> User { get; set; } = default!; public virtual ParkingZone<TParkingZoneId> ParkingZone { get; set; } = default!;
 }
 
 public class AppUserParkingSubscription<TKey> : AppUserParkingSubscription<TKey, TKey, TKey, TKey>

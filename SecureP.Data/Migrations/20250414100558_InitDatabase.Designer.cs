@@ -12,8 +12,8 @@ using SecureP.Data;
 namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    [Migration("20250402073959_Add_Concurrency_Stamp_To_Parking_Location")]
-    partial class Add_Concurrency_Stamp_To_Parking_Location
+    [Migration("20250414100558_InitDatabase")]
+    partial class InitDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -26,7 +26,7 @@ namespace SecureP.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppRole<string>", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -53,7 +53,7 @@ namespace SecureP.Data.Migrations
                     b.ToTable("AspNetRoles", "Identity");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -64,8 +64,8 @@ namespace SecureP.Data.Migrations
                     b.Property<string>("ClaimType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("ClaimValue")
+                        .HasColumnType("int");
 
                     b.Property<string>("RoleId")
                         .IsRequired()
@@ -76,68 +76,6 @@ namespace SecureP.Data.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", "Identity");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserClaims", "Identity");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("LoginProvider", "ProviderKey");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("AspNetUserLogins", "Identity");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("UserId", "RoleId");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("AspNetUserRoles", "Identity");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.AppUser<string>", b =>
@@ -234,6 +172,31 @@ namespace SecureP.Data.Migrations
                     b.ToTable("AspNetUsers", "Identity");
                 });
 
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", "Identity");
+                });
+
             modelBuilder.Entity("SecureP.Identity.Models.AppUserLicensePlate<string>", b =>
                 {
                     b.Property<string>("UserId")
@@ -247,40 +210,50 @@ namespace SecureP.Data.Migrations
                     b.ToTable("UserLicensePlates", "Identity");
                 });
 
-            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", "Identity");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<double>("ChangeSignageFee")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("float")
-                        .HasDefaultValue(0.0);
+                        .HasColumnType("float");
 
                     b.Property<double>("ClampingFee")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("float")
-                        .HasDefaultValue(0.0);
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(89)
-                        .HasColumnType("nvarchar(89)");
+                        .HasColumnType("float");
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsPaid")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasColumnType("bit");
 
                     b.Property<string>("LicensePlate")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ParkingLocationId")
+                    b.Property<string>("ParkingLocationRateId")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ParkingZoneId")
@@ -296,22 +269,35 @@ namespace SecureP.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<double>("SubscriptionFee")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("float")
-                        .HasDefaultValue(0.0);
+                        .HasColumnType("float");
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ParkingLocationRateId");
+
+                    b.HasIndex("ParkingZoneId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("UserParkingSubscriptions", "Identity");
+                });
 
-                    b.HasDiscriminator().HasValue("AppUserParkingSubscription<string, string, string, string>");
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.UseTphMappingStrategy();
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", "Identity");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.AppUserToken<string>", b =>
@@ -346,16 +332,6 @@ namespace SecureP.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
-                    b.Property<int>("AvailableSpaces")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("Capacity")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
@@ -370,9 +346,37 @@ namespace SecureP.Data.Migrations
                     b.ToTable("ParkingLocations", "Identity");
                 });
 
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocationRate<string>", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ParkingLocationId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ParkingRateId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParkingRateId");
+
+                    b.HasIndex("ParkingLocationId", "ParkingRateId", "EffectiveFrom")
+                        .IsUnique()
+                        .HasFilter("[ParkingLocationId] IS NOT NULL AND [ParkingRateId] IS NOT NULL");
+
+                    b.ToTable("ParkingLocationRates", "Identity");
+                });
+
             modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
                 {
-                    b.Property<string>("ParkingLocationId")
+                    b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<double>("DailyRate")
@@ -390,7 +394,7 @@ namespace SecureP.Data.Migrations
                         .HasColumnType("float")
                         .HasDefaultValue(0.0);
 
-                    b.HasKey("ParkingLocationId");
+                    b.HasKey("Id");
 
                     b.ToTable("ParkingRates", "Identity");
                 });
@@ -425,59 +429,26 @@ namespace SecureP.Data.Migrations
                     b.ToTable("ParkingZones", "Identity");
                 });
 
-            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppRoleClaim<string>", b =>
                 {
-                    b.HasBaseType("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>");
-
-                    b.HasIndex("ParkingLocationId");
-
-                    b.HasIndex("ParkingZoneId");
-
-                    b.ToTable("UserParkingSubscriptions", "Identity");
-
-                    b.HasDiscriminator().HasValue("AppUserParkingSubscription<string>");
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<string>", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("SecureP.Identity.Models.AppUser<string>", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("SecureP.Identity.Models.AppUser<string>", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<string>", null)
-                        .WithMany()
+                    b.HasOne("SecureP.Identity.Models.AppRole<string>", "Role")
+                        .WithMany("RoleClaims")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SecureP.Identity.Models.AppUser<string>", null)
-                        .WithMany()
+                    b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserClaim<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
+                        .WithMany("UserClaims")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.AppUserLicensePlate<string>", b =>
@@ -491,12 +462,55 @@ namespace SecureP.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string, string, string, string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserLogin<string>", b =>
                 {
                     b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
-                        .WithMany("UserParkingSubscriptions")
+                        .WithMany("UserLogins")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.ParkingLocationRate<string>", "ParkingLocationRate")
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("ParkingLocationRateId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SecureP.Identity.Models.ParkingZone<string>", "ParkingZone")
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("ParkingZoneId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("ParkingLocationRate");
+
+                    b.Navigation("ParkingZone");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.AppUserRole<string>", b =>
+                {
+                    b.HasOne("SecureP.Identity.Models.AppRole<string>", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SecureP.Identity.Models.AppUser<string>", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
 
                     b.Navigation("User");
                 });
@@ -512,15 +526,21 @@ namespace SecureP.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocationRate<string>", b =>
                 {
                     b.HasOne("SecureP.Identity.Models.ParkingLocation<string>", "ParkingLocation")
-                        .WithOne("ParkingRate")
-                        .HasForeignKey("SecureP.Identity.Models.ParkingRate<string>", "ParkingLocationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("ParkingLocationRates")
+                        .HasForeignKey("ParkingLocationId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("SecureP.Identity.Models.ParkingRate<string>", "ParkingRate")
+                        .WithMany("ParkingLocationRates")
+                        .HasForeignKey("ParkingRateId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("ParkingLocation");
+
+                    b.Navigation("ParkingRate");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.ParkingZone<string>", b =>
@@ -533,39 +553,41 @@ namespace SecureP.Data.Migrations
                     b.Navigation("ParkingLocation");
                 });
 
-            modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
+            modelBuilder.Entity("SecureP.Identity.Models.AppRole<string>", b =>
                 {
-                    b.HasOne("SecureP.Identity.Models.ParkingLocation<string>", "ParkingLocation")
-                        .WithMany("UserParkingSubscriptions")
-                        .HasForeignKey("ParkingLocationId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.Navigation("RoleClaims");
 
-                    b.HasOne("SecureP.Identity.Models.ParkingZone<string>", "ParkingZone")
-                        .WithMany("UserParkingSubscriptions")
-                        .HasForeignKey("ParkingZoneId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("ParkingLocation");
-
-                    b.Navigation("ParkingZone");
+                    b.Navigation("UserRoles");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.AppUser<string>", b =>
                 {
+                    b.Navigation("UserClaims");
+
                     b.Navigation("UserLicensePlates");
 
-                    b.Navigation("UserParkingSubscriptions");
+                    b.Navigation("UserLogins");
+
+                    b.Navigation("UserRoles");
 
                     b.Navigation("UserTokens");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.ParkingLocation<string>", b =>
                 {
-                    b.Navigation("ParkingRate");
+                    b.Navigation("ParkingLocationRates");
 
                     b.Navigation("ParkingZones");
+                });
 
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocationRate<string>", b =>
+                {
                     b.Navigation("UserParkingSubscriptions");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
+                {
+                    b.Navigation("ParkingLocationRates");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.ParkingZone<string>", b =>

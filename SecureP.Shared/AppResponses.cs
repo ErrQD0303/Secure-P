@@ -103,4 +103,10 @@ public class AppResponses
         public static string ParkingLocationDeleted => "Parking location deleted successfully";
         public static string ParkingLocationNotDeleted => "Parking location not deleted";
     }
+
+    public class GetAllParkingRateResponses
+    {
+        public static string NoParkingRatesFound => "No parking rates found";
+        public static string ParkingRatesFound => "Parking rates retrieved successfully.";
+    }
 }

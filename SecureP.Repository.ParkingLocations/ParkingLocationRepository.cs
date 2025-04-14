@@ -22,7 +22,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         _logger = logger;
     }
 
-    public async Task<(ValidationResult, ParkingLocation<TKey>?)> CreateParkingLocationAsync(CreateParkingLocationDto parkingLocation)
+    public async Task<(ValidationResult, ParkingLocation<TKey>?)> CreateParkingLocationAsync(CreateParkingLocationDto<TKey> parkingLocation)
     {
         if (!ValidateParkingLocationModel(parkingLocation.ToParkingLocationValidationModel(), out var validationResult))
         {
@@ -40,16 +40,40 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             },
             Name = parkingLocation.Name,
             Address = parkingLocation.Address,
-            Capacity = parkingLocation.Capacity,
-            AvailableSpaces = parkingLocation.AvailableSpaces == 0 ? parkingLocation.Capacity : parkingLocation.AvailableSpaces,
-            ParkingRate = new ParkingRate<TKey>
-            {
-                HourlyRate = parkingLocation.ParkingRate?.HourlyRate ?? 0,
-                DailyRate = parkingLocation.ParkingRate?.DailyRate ?? 0,
-                MonthlyRate = parkingLocation.ParkingRate?.MonthlyRate ?? 0
-            },
+            ParkingZones = [],
+            ParkingLocationRates = [],
             ConcurrencyStamp = Guid.NewGuid().ToString()
         };
+
+        foreach (var zone in parkingLocation.ParkingZones)
+        {
+            newParkingLocation.ParkingZones.Add(new ParkingZone<TKey>
+            {
+                Id = typeof(TKey) switch
+                {
+                    Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid(),
+                    Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
+                    _ => throw new InvalidOperationException("Invalid type for TKey")
+                },
+                Name = zone.Name,
+                Capacity = zone.Capacity,
+                AvailableSpaces = zone.AvailableSpaces
+            });
+        }
+
+        newParkingLocation.ParkingLocationRates.Add(new ParkingLocationRate<TKey>
+        {
+            Id = typeof(TKey) switch
+            {
+                Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid(),
+                Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
+                _ => throw new InvalidOperationException("Invalid type for TKey")
+            },
+            ParkingLocationId = newParkingLocation.Id,
+            ParkingRateId = parkingLocation.ParkingRateId!,
+            EffectiveFrom = DateTime.UtcNow,
+            EffectiveTo = null,
+        });
 
         await _context.ParkingLocations.AddAsync(newParkingLocation);
 
@@ -79,7 +103,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         }
     }
 
-    private static bool ValidateParkingLocationModel(ParkingLocationValidationModel model, out ValidationResult validationResult)
+    private static bool ValidateParkingLocationModel(ParkingLocationValidationModel<TKey> model, out ValidationResult validationResult)
     {
         validationResult = new ValidationResult { Success = true, Errors = [] };
 
@@ -95,16 +119,44 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             validationResult.Errors.Add("address", "Parking location address is required.");
         }
 
-        if (model.Capacity <= 0)
+        if (model.ParkingRateId is null)
         {
             validationResult.Success = false;
-            validationResult.Errors.Add("capacity", "Parking location capacity must be greater than zero.");
+            validationResult.Errors.Add("parking_rate_id", "You must specify a parking rate for this parking location.");
         }
 
-        if (model.AvailableSpaces < 0)
+        int index = 0;
+        foreach (var zone in model.ParkingZones)
         {
-            validationResult.Success = false;
-            validationResult.Errors.Add("available_spaces", "Parking location available spaces cannot be negative.");
+            Dictionary<string, string> zoneErrors = [];
+            if (string.IsNullOrWhiteSpace(zone.Name))
+            {
+                validationResult.Success = false;
+                zoneErrors.Add("name", $"Parking zone name is required");
+            }
+
+            if (zone.Capacity <= 0)
+            {
+                validationResult.Success = false;
+                zoneErrors.Add("capacity", $"Parking zone capacity must be greater than 0.");
+            }
+
+            if (zone.AvailableSpaces < 0)
+            {
+                validationResult.Success = false;
+                zoneErrors.Add("available_spaces", $"Parking zone available spaces cannot be negative.");
+            }
+
+            if (zoneErrors.Count > 0)
+            {
+                var newEntryErrors = new Dictionary<string, object>
+                {
+                    { $"{index}", zoneErrors }
+                };
+                validationResult.Errors.Add($"parking_zones", newEntryErrors);
+            }
+
+            ++index;
         }
 
         return validationResult.Success;
@@ -136,7 +188,12 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         {
             id = (TKey)(object)stringId.Trim();
         }
-        var parkingLocation = await _context.ParkingLocations.Include(pl => pl.ParkingRate).FirstOrDefaultAsync(p => p.Id.Equals(id));
+        var parkingLocation = await _context.ParkingLocations
+            .Include(pl => pl.ParkingZones)
+            .Include(pl => pl.ParkingLocationRates)
+            .ThenInclude(plr => plr.ParkingRate)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id.Equals(id));
 
         if (parkingLocation == null)
         {
@@ -162,7 +219,11 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         }
 
         var parkingLocations = _context.ParkingLocations
-            .Include(pl => pl.ParkingRate)
+            .Include(pl => pl.ParkingZones)
+            .Include(pl => pl.ParkingLocationRates)
+            .ThenInclude(plr => plr.ParkingRate)
+            .AsQueryable()
+            .Where(p => p.ParkingLocationRates.Any(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow)))
             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -179,19 +240,44 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.Address) : parkingLocations.OrderBy(p => p.Address);
                 break;
             case ParkingLocationOrderBy.Capacity:
-                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.Capacity) : parkingLocations.OrderBy(p => p.Capacity);
+                parkingLocations = desc
+                    ? parkingLocations.OrderByDescending(p => p.ParkingZones.Sum(z => z.Capacity))
+                    : parkingLocations.OrderBy(p => p.ParkingZones.Sum(z => z.Capacity));
                 break;
             case ParkingLocationOrderBy.AvailableSpaces:
-                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.AvailableSpaces) : parkingLocations.OrderBy(p => p.AvailableSpaces);
+                parkingLocations = desc
+                    ? parkingLocations.OrderByDescending(p => p.ParkingZones.Sum(z => z.AvailableSpaces))
+                    : parkingLocations.OrderBy(p => p.ParkingZones.Sum(z => z.AvailableSpaces));
                 break;
             case ParkingLocationOrderBy.HourlyRate:
-                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.HourlyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.HourlyRate);
+                parkingLocations = desc
+                    ? parkingLocations.OrderByDescending(p => p.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.HourlyRate).FirstOrDefault())
+                    : parkingLocations.OrderBy(p => p.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.HourlyRate).FirstOrDefault());
                 break;
             case ParkingLocationOrderBy.DailyRate:
-                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.DailyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.DailyRate);
+                parkingLocations = desc
+                    ? parkingLocations.OrderByDescending(pl => pl.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.DailyRate).FirstOrDefault())
+                    : parkingLocations.OrderBy(pl => pl.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.DailyRate).FirstOrDefault());
                 break;
             case ParkingLocationOrderBy.MonthlyRate:
-                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingRate!.MonthlyRate) : parkingLocations.OrderBy(p => p.ParkingRate!.MonthlyRate);
+                parkingLocations = desc
+                    ? parkingLocations.OrderByDescending(pl => pl.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.MonthlyRate).FirstOrDefault())
+                    : parkingLocations.OrderBy(pl => pl.ParkingLocationRates
+                        .Where(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))
+                        .Select(plr => plr.ParkingRate!.MonthlyRate).FirstOrDefault());
+                break;
+            case ParkingLocationOrderBy.TotalParkingZones:
+                parkingLocations = desc ? parkingLocations.OrderByDescending(p => p.ParkingZones.Count) : parkingLocations.OrderBy(p => p.ParkingZones.Count);
                 break;
             default:
                 _logger.LogWarning($"GetParkingLocationsAsync: Invalid order by parameter '{sort}'. Defaulting to 'name'.");
@@ -206,18 +292,37 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         var returnObject = new GetAllParkingLocationsDto<TKey>
         {
             Items = await parkingLocations
-            .Select(p => new GetParkingLocationDto<TKey>
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Address = p.Address,
-                Capacity = p.Capacity,
-                AvailableSpaces = p.AvailableSpaces,
-                HourlyRate = p.ParkingRate != null ? p.ParkingRate.HourlyRate : 0,
-                DailyRate = p.ParkingRate != null ? p.ParkingRate.DailyRate : 0,
-                MonthlyRate = p.ParkingRate != null ? p.ParkingRate.MonthlyRate : 0,
-                ConcurrencyStamp = p.ConcurrencyStamp ?? string.Empty
-            }).ToListAsync(),
+                .AsNoTracking()
+                .AsQueryable()
+                .Select(p => new GetParkingLocationDto<TKey>
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Address = p.Address,
+                    ParkingZones = p.ParkingZones.Select(z => new GetParkingLocationParkingZoneDto<TKey>
+                    {
+                        Id = z.Id,
+                        Name = z.Name,
+                        Capacity = z.Capacity,
+                        AvailableSpaces = z.AvailableSpaces
+                    }).ToList(),
+                    ParkingRate = new GetParkingLocationParkingRateDto<TKey>
+                    {
+                        Id = p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow)) != null
+                            ? p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))!.ParkingRate.Id
+                            : default!,
+                        HourlyRate = p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow)) != null
+                            ? p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))!.ParkingRate.HourlyRate
+                            : default!,
+                        DailyRate = p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow)) != null
+                            ? p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))!.ParkingRate.DailyRate
+                            : default!,
+                        MonthlyRate = p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow)) != null
+                            ? p.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow))!.ParkingRate.MonthlyRate
+                            : default!,
+                    },
+                    ConcurrencyStamp = p.ConcurrencyStamp ?? string.Empty
+                }).ToListAsync(),
             TotalItems = totalParkingLocations,
         };
 
@@ -232,7 +337,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         return returnObject;
     }
 
-    public async Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationDto parkingLocation)
+    public async Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationDto<TKey> parkingLocation)
     {
         var validationResult = new ValidationResult { Success = true, Errors = [] };
 
@@ -260,7 +365,11 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             id = (TKey)(object)stringId.Trim();
         }
 
-        var existingParkingLocation = await _context.ParkingLocations.Include(pl => pl.ParkingRate).FirstOrDefaultAsync(p => p.Id.Equals(id));
+        var existingParkingLocation = await _context.ParkingLocations
+            .Include(pl => pl.ParkingLocationRates)
+            .ThenInclude(plr => plr.ParkingRate)
+            .Include(pl => pl.ParkingZones)
+            .FirstOrDefaultAsync(p => p.Id.Equals(id));
 
         if (existingParkingLocation is null)
         {
@@ -299,7 +408,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         return validationResult;
     }
 
-    private static async Task<int> UpdateExistingParkingLocation(ParkingLocation<TKey> existingParkingLocation, UpdateParkingLocationDto parkingLocation, AppDbContext<TKey> context)
+    private static async Task<int> UpdateExistingParkingLocation(ParkingLocation<TKey> existingParkingLocation, UpdateParkingLocationDto<TKey> parkingLocation, AppDbContext<TKey> context)
     {
         if (!string.Equals(existingParkingLocation.ConcurrencyStamp, parkingLocation.ConcurrencyStamp, StringComparison.Ordinal))
         {
@@ -308,13 +417,22 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         existingParkingLocation.Name = parkingLocation.Name ?? existingParkingLocation.Name;
         existingParkingLocation.Address = parkingLocation.Address ?? existingParkingLocation.Address;
-        existingParkingLocation.Capacity = parkingLocation.Capacity ?? existingParkingLocation.Capacity;
-        existingParkingLocation.AvailableSpaces = parkingLocation.AvailableSpaces ?? existingParkingLocation.AvailableSpaces;
-        existingParkingLocation.ParkingRate ??= new();
-        existingParkingLocation.ParkingRate.ParkingLocationId = existingParkingLocation.Id;
-        existingParkingLocation.ParkingRate.HourlyRate = parkingLocation.ParkingRate?.HourlyRate ?? existingParkingLocation.ParkingRate.HourlyRate;
-        existingParkingLocation.ParkingRate.DailyRate = parkingLocation.ParkingRate?.DailyRate ?? existingParkingLocation.ParkingRate.DailyRate;
-        existingParkingLocation.ParkingRate.MonthlyRate = parkingLocation.ParkingRate?.MonthlyRate ?? existingParkingLocation.ParkingRate.MonthlyRate;
+        existingParkingLocation.ParkingZones = [.. existingParkingLocation.ParkingZones.Where(pz => parkingLocation.ParkingZones.Any(z => z.Id.Equals(pz.Id)))];
+        foreach (var existingZone in existingParkingLocation.ParkingZones)
+        {
+            var updatedZone = parkingLocation.ParkingZones.FirstOrDefault(z => z.Id.Equals(existingZone.Id));
+            if (updatedZone != null)
+            {
+                existingZone.Name = updatedZone.Name ?? existingZone.Name;
+                existingZone.Capacity = updatedZone.Capacity > 0 ? updatedZone.Capacity : existingZone.Capacity;
+                existingZone.AvailableSpaces = updatedZone.AvailableSpaces >= 0 ? updatedZone.AvailableSpaces : existingZone.AvailableSpaces;
+            }
+        }
+        var currentParkingRate = existingParkingLocation.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow));
+        if (currentParkingRate != null)
+        {
+            currentParkingRate.ParkingRateId = parkingLocation.ParkingRateId ?? currentParkingRate.ParkingRateId;
+        }
         existingParkingLocation.ConcurrencyStamp = Guid.NewGuid().ToString();
 
         context.ParkingLocations.Update(existingParkingLocation);

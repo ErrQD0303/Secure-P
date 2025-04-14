@@ -1,10 +1,15 @@
+using System.Text.Json.Serialization;
+
 namespace SecureP.Identity.Models.Dto;
 
-public class CreateParkingLocationDto
+public class CreateParkingLocationDto<TKey> where TKey : IEquatable<TKey>
 {
+    [JsonPropertyName("name")]
     public virtual string Name { get; set; } = default!;
+    [JsonPropertyName("address")]
     public virtual string Address { get; set; } = default!;
-    public virtual int Capacity { get; set; } = default!;
-    public virtual int AvailableSpaces { get; set; } = default!;
-    public virtual CreateParkingRateDto? ParkingRate { get; set; } = default!;
+    [JsonPropertyName("parking_zones")]
+    public virtual IEnumerable<CreateParkingLocationParkingZoneDto> ParkingZones { get; set; } = default!;
+    [JsonPropertyName("parking_rate_id")]
+    public virtual TKey? ParkingRateId { get; set; } = default!;
 }

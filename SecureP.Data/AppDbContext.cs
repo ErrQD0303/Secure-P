@@ -17,6 +17,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
     public virtual DbSet<ParkingLocation<TKey>> ParkingLocations { get; set; } = default!;
     public virtual DbSet<ParkingRate<TKey>> ParkingRates { get; set; } = default!;
     public virtual DbSet<ParkingZone<TKey>> ParkingZones { get; set; } = default!;
+    public virtual DbSet<ParkingLocationRate<TKey>> ParkingLocationRates { get; set; } = default!;
     public virtual DbSet<AppUserParkingSubscription<TKey, TKey, TKey, TKey>> UserParkingSubscriptions { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -106,9 +107,9 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
         {
             b.ToTable("ParkingLocations");
 
-            b.HasOne(pl => pl.ParkingRate)
-                .WithOne(pr => pr.ParkingLocation)
-                .HasForeignKey<ParkingRate<TKey>>(pr => pr.ParkingLocationId)
+            b.HasMany(pl => pl.ParkingLocationRates)
+                .WithOne(plr => plr.ParkingLocation)
+                .HasForeignKey(plr => plr.ParkingLocationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             b.HasMany(pl => pl.ParkingZones)
@@ -116,27 +117,42 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
                 .HasForeignKey(pz => pz.ParkingLocationId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            b.HasMany(pl => pl.UserParkingSubscriptions)
+            /* b.HasMany(pl => pl.UserParkingSubscriptions)
                 .WithOne(ups => ups.ParkingLocation)
                 .HasForeignKey(ups => ups.ParkingLocationId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.SetNull); */
 
             b.Property(pl => pl.Name).HasMaxLength(256);
             b.Property(pl => pl.Address).HasMaxLength(512);
-            b.Property(pl => pl.AvailableSpaces).HasDefaultValue(0);
-            b.Property(pl => pl.Capacity).HasDefaultValue(0);
             b.Property(pl => pl.ConcurrencyStamp).IsConcurrencyToken();
         });
 
         builder.Entity<ParkingRate<TKey>>(b =>
         {
-            b.HasKey(pr => pr.ParkingLocationId);
+            b.HasKey(pr => pr.Id);
+
+            b.HasMany(pr => pr.ParkingLocationRates)
+                .WithOne(plr => plr.ParkingRate)
+                .HasForeignKey(plr => plr.ParkingRateId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             b.ToTable("ParkingRates");
 
             b.Property(pr => pr.HourlyRate).HasDefaultValue(0.0);
             b.Property(pr => pr.DailyRate).HasDefaultValue(0.0);
             b.Property(pr => pr.MonthlyRate).HasDefaultValue(0.0);
+        });
+
+        builder.Entity<ParkingLocationRate<TKey>>(b =>
+        {
+            b.HasKey(plr => plr.Id);
+
+            b.HasIndex(plr => new { plr.ParkingLocationId, plr.ParkingRateId, plr.EffectiveFrom })
+                .IsUnique();
+
+            b.ToTable("ParkingLocationRates");
+
+            b.Property(plr => plr.EffectiveTo).HasDefaultValue(null);
         });
 
         builder.Entity<ParkingZone<TKey>>(b =>
@@ -164,6 +180,12 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
 
             // b.Property(ups => ups.StartDate).HasDefaultValue(DateTime.UtcNow);
             // b.Property(ups => ups.EndDate).HasDefaultValue(DateTime.UtcNow.AddMonths(1));
+
+            b.HasOne(ups => ups.ParkingLocationRate)
+                .WithMany(plr => plr.UserParkingSubscriptions)
+                .HasForeignKey(ups => ups.ParkingLocationRateId)
+                .OnDelete(DeleteBehavior.NoAction);
+
             b.Property(ups => ups.SubscriptionFee).HasDefaultValue(0.0);
             b.Property(ups => ups.ClampingFee).HasDefaultValue(0.0);
             b.Property(ups => ups.ChangeSignageFee).HasDefaultValue(0.0);
@@ -171,5 +193,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
             // b.Property(ups => ups.PaymentDate).HasDefaultValue(null);
             b.Property(ups => ups.LicensePlate).HasMaxLength(256);
         });
+
+        builder.Ignore<AppUserParkingSubscription<TKey, TKey, TKey, TKey>>();
     }
 }

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using SecureP.Identity.Models.Dto;
 using SecureP.Service.Abstraction.Entities;
 
@@ -9,37 +5,36 @@ namespace SecureP.Service.ParkingLocationService.Mappers
 {
     public static class ParkingLocationServiceExtensions
     {
-        public static CreateParkingLocationDto ToCreateParkingLocationDto(this CreateParkingLocationRequest request)
+        public static CreateParkingLocationDto<TKey> ToCreateParkingLocationDto<TKey>(this CreateParkingLocationRequest request) where TKey : class, IEquatable<TKey>
         {
-            return new CreateParkingLocationDto
+            return new CreateParkingLocationDto<TKey>
             {
                 Name = request.Name,
                 Address = request.Address,
-                Capacity = request.Capacity,
-                AvailableSpaces = request.AvailableSpaces,
-                ParkingRate = new CreateParkingRateDto
+                ParkingZones = [.. request.ParkingZones.Select(zone => new CreateParkingLocationParkingZoneDto
                 {
-                    HourlyRate = request.HourlyRate,
-                    DailyRate = request.DailyRate,
-                    MonthlyRate = request.MonthlyRate
-                }
+                    Name = zone.Name,
+                    Capacity = zone.Capacity,
+                    AvailableSpaces = zone.AvailableSpaces
+                })],
+                ParkingRateId = request.ParkingRateId as TKey ?? default!,
             };
         }
 
-        public static UpdateParkingLocationDto ToUpdateParkingLocationDto(this UpdateParkingLocationRequest request)
+        public static UpdateParkingLocationDto<TKey> ToUpdateParkingLocationDto<TKey>(this UpdateParkingLocationRequest request) where TKey : class, IEquatable<TKey>
         {
-            return new UpdateParkingLocationDto
+            return new UpdateParkingLocationDto<TKey>
             {
                 Name = request.Name,
                 Address = request.Address,
-                Capacity = request.Capacity,
-                AvailableSpaces = request.AvailableSpaces,
-                ParkingRate = new UpdateParkingRateDto
+                ParkingZones = [.. request.ParkingZones.Select(zone => new UpdateParkingLocationParkingZoneDto<TKey>
                 {
-                    HourlyRate = request.HourlyRate,
-                    DailyRate = request.DailyRate,
-                    MonthlyRate = request.MonthlyRate
-                },
+                    Id = zone.Id as TKey ?? default!,
+                    Name = zone.Name,
+                    Capacity = zone.Capacity,
+                    AvailableSpaces = zone.AvailableSpaces
+                })],
+                ParkingRateId = request.ParkingRateId as TKey ?? default!,
                 ConcurrencyStamp = request.ConcurrencyStamp
             };
         }

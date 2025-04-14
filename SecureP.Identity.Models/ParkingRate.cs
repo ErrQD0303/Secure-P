@@ -1,12 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace SecureP.Identity.Models;
 
 public class ParkingRate<TKey> where TKey : IEquatable<TKey>
 {
-    public virtual TKey ParkingLocationId { get; set; } = default!;
-    public double HourlyRate { get; set; }
-    public double DailyRate { get; set; }
-    public double MonthlyRate { get; set; }
+    [Key]
+    public virtual TKey Id { get; set; } = default!;
+    public virtual double HourlyRate { get; set; }
+    public virtual double DailyRate { get; set; }
+    public virtual double MonthlyRate { get; set; }
 
     // Navigation properties
-    public virtual ParkingLocation<TKey> ParkingLocation { get; set; } = default!;
+    public virtual ICollection<ParkingLocationRate<TKey>> ParkingLocationRates { get; set; } = default!;
 }

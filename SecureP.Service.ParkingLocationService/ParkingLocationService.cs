@@ -11,7 +11,7 @@ using SecureP.Service.ParkingLocationService.Mappers;
 namespace SecureP.Service.ParkingLocationService;
 
 public class ParkingLocationService<TKey> : IParkingLocationService<TKey>
-    where TKey : IEquatable<TKey>
+    where TKey : class, IEquatable<TKey>
 {
     private readonly ILogger<ParkingLocationService<TKey>> _logger;
     private readonly IParkingLocationRepository<TKey> _parkingLocationRepository;
@@ -25,7 +25,7 @@ public class ParkingLocationService<TKey> : IParkingLocationService<TKey>
 
     public Task<(ValidationResult, ParkingLocation<TKey>?)> CreateParkingLocationAsync(CreateParkingLocationRequest request)
     {
-        return _parkingLocationRepository.CreateParkingLocationAsync(request.ToCreateParkingLocationDto());
+        return _parkingLocationRepository.CreateParkingLocationAsync(request.ToCreateParkingLocationDto<TKey>());
     }
 
     public Task<bool> DeleteParkingLocationAsync(TKey id)
@@ -45,6 +45,6 @@ public class ParkingLocationService<TKey> : IParkingLocationService<TKey>
 
     public Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationRequest request)
     {
-        return _parkingLocationRepository.UpdateParkingLocationAsync(id, request.ToUpdateParkingLocationDto());
+        return _parkingLocationRepository.UpdateParkingLocationAsync(id, request.ToUpdateParkingLocationDto<TKey>());
     }
 }

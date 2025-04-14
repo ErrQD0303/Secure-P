@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 namespace SecureP.Identity.Models.Dto.SortModels;
 
 /// <summary>
-/// Specifies the criteria by which parking locations can be ordered.
+/// Specifies the criteria by which parking rates can be ordered.
 /// </summary>
 /// <remarks>
-/// This enum can be used in APIs to define sorting preferences for parking locations.
+/// This enum can be used in APIs to define sorting preferences for parking rates.
 /// </remarks>
 /// <example>
 /// Example usage in Swagger:
@@ -18,14 +18,20 @@ namespace SecureP.Identity.Models.Dto.SortModels;
 /// in the Swagger configuration.
 /// </example>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ParkingLocationOrderBy
+public enum ParkingRateOrderBy
 {
-    Name,
-    Address,
-    Capacity,
-    AvailableSpaces,
+    /// <summary>
+    /// Order by hourly rate.
+    /// </summary>
     HourlyRate,
+
+    /// <summary>
+    /// Order by daily rate.
+    /// </summary>
     DailyRate,
+
+    /// <summary>
+    /// Order by monthly rate.
+    /// </summary>
     MonthlyRate,
-    TotalParkingZones,
 }
