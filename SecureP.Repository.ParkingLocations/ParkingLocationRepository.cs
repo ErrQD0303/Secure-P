@@ -382,7 +382,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         try
         {
-            var result = await UpdateExistingParkingLocation(existingParkingLocation, parkingLocation, _context);
+            var result = await UpdateExistingParkingLocationAsync(existingParkingLocation, parkingLocation, _context);
 
             if (result <= 0)
             {
@@ -408,19 +408,28 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         return validationResult;
     }
 
-    private static async Task<int> UpdateExistingParkingLocation(ParkingLocation<TKey> existingParkingLocation, UpdateParkingLocationDto<TKey> parkingLocation, AppDbContext<TKey> context)
+    private static async Task<int> UpdateExistingParkingLocationAsync(ParkingLocation<TKey> existingParkingLocation, UpdateParkingLocationDto<TKey> parkingLocationRate, AppDbContext<TKey> context)
     {
-        if (!string.Equals(existingParkingLocation.ConcurrencyStamp, parkingLocation.ConcurrencyStamp, StringComparison.Ordinal))
+        if (!string.Equals(existingParkingLocation.ConcurrencyStamp, parkingLocationRate.ConcurrencyStamp, StringComparison.Ordinal))
         {
             throw new DbUpdateConcurrencyException("Concurrency conflict occurred. The parking location has been modified by another process.");
         }
 
-        existingParkingLocation.Name = parkingLocation.Name ?? existingParkingLocation.Name;
-        existingParkingLocation.Address = parkingLocation.Address ?? existingParkingLocation.Address;
-        existingParkingLocation.ParkingZones = [.. existingParkingLocation.ParkingZones.Where(pz => parkingLocation.ParkingZones.Any(z => z.Id.Equals(pz.Id)))];
+        existingParkingLocation.Name = parkingLocationRate.Name ?? existingParkingLocation.Name;
+        existingParkingLocation.Address = parkingLocationRate.Address ?? existingParkingLocation.Address;
+
+        var removeParkingZone = existingParkingLocation.ParkingZones.Where(pz => !parkingLocationRate.ParkingZones.Any(z => z.Id.Equals(pz.Id))).ToList();
+
+        existingParkingLocation.ParkingZones = [.. existingParkingLocation.ParkingZones.Where(pz => parkingLocationRate.ParkingZones.Any(z => z.Id.Equals(pz.Id)))];
+
+        foreach (var zone in removeParkingZone)
+        {
+            context.ParkingZones.Remove(zone);
+        }
+
         foreach (var existingZone in existingParkingLocation.ParkingZones)
         {
-            var updatedZone = parkingLocation.ParkingZones.FirstOrDefault(z => z.Id.Equals(existingZone.Id));
+            var updatedZone = parkingLocationRate.ParkingZones.FirstOrDefault(z => z.Id.Equals(existingZone.Id));
             if (updatedZone != null)
             {
                 existingZone.Name = updatedZone.Name ?? existingZone.Name;
@@ -428,10 +437,27 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 existingZone.AvailableSpaces = updatedZone.AvailableSpaces >= 0 ? updatedZone.AvailableSpaces : existingZone.AvailableSpaces;
             }
         }
-        var currentParkingRate = existingParkingLocation.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow));
-        if (currentParkingRate != null)
+
+        foreach (var zone in parkingLocationRate.ParkingZones.Where(z => !existingParkingLocation.ParkingZones.Any(pz => pz.Id.Equals(z.Id))))
         {
-            currentParkingRate.ParkingRateId = parkingLocation.ParkingRateId ?? currentParkingRate.ParkingRateId;
+            existingParkingLocation.ParkingZones.Add(new ParkingZone<TKey>
+            {
+                Id = typeof(TKey) switch
+                {
+                    Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid(),
+                    Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
+                    _ => throw new InvalidOperationException("Invalid type for TKey")
+                },
+                Name = zone.Name,
+                Capacity = zone.Capacity,
+                AvailableSpaces = zone.AvailableSpaces
+            });
+        }
+
+        var currentParkingLocationRate = existingParkingLocation.ParkingLocationRates.FirstOrDefault(plr => plr.EffectiveFrom <= DateTime.UtcNow && (plr.EffectiveTo == null || plr.EffectiveTo >= DateTime.UtcNow));
+        if (currentParkingLocationRate != null && !String.Equals(currentParkingLocationRate.ParkingRateId as string, parkingLocationRate.ParkingRateId as string, StringComparison.Ordinal))
+        {
+            currentParkingLocationRate.ParkingRateId = parkingLocationRate.ParkingRateId ?? currentParkingLocationRate.ParkingRateId;
         }
         existingParkingLocation.ConcurrencyStamp = Guid.NewGuid().ToString();
 
