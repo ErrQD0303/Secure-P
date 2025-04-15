@@ -424,7 +424,8 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         foreach (var zone in removeParkingZone)
         {
-            context.ParkingZones.Remove(zone);
+            zone.ParkingLocationId = default!;
+            context.ParkingZones.Update(zone);
         }
 
         foreach (var existingZone in existingParkingLocation.ParkingZones)
