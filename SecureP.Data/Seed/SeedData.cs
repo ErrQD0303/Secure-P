@@ -14,10 +14,10 @@ public static class SeedData<TKey> where TKey : IEquatable<TKey>
         using var context = new AppDbContext<TKey>(serviceProvider.GetRequiredService<DbContextOptions<AppDbContext<TKey>>>());
 
         var adminId = await EnsureUserAsync(serviceProvider, AppConstants.DefaultAdminEmail, string.IsNullOrEmpty(defaultPW) ? AppConstants.DefaultAdminPassword : defaultPW);
-        await EnsureRoleAsync(serviceProvider, adminId, RoleClaimType.Administrator.ToString(), RoleClaimType.Administrator);
+        await EnsureRoleAsync(serviceProvider, adminId, RoleClaimType.Administrator.ToString(), RoleClaimType.Administrator, context);
 
         var normalUserId = await EnsureUserAsync(serviceProvider, AppConstants.DefaultNormalUserEmail, string.IsNullOrEmpty(defaultPW) ? AppConstants.DefaultNormalUserPassword : defaultPW);
-        await EnsureRoleAsync(serviceProvider, normalUserId, RoleClaimType.NormalUser.ToString(), RoleClaimType.NormalUser);
+        await EnsureRoleAsync(serviceProvider, normalUserId, RoleClaimType.NormalUser.ToString(), RoleClaimType.NormalUser, context);
 
         await SeedDBAsync(context);
     }
@@ -25,7 +25,9 @@ public static class SeedData<TKey> where TKey : IEquatable<TKey>
     public static async Task SeedDBAsync(AppDbContext<TKey> context)
     {
         // Add your seed data here. For example:
-        var existingUsers = await context.Users.Where(u => u.UserRoles == null || u.UserRoles.Count == 0).ToListAsync();
+        var roles = await context.Roles.ToListAsync();
+        var roleIds = roles.Select(r => r.Id).ToList();
+        var existingUsers = await context.Users.Where(u => u.UserRoles == null || u.UserRoles.Count == 0 || u.UserRoles.Any(ur => !roleIds.Contains(ur.RoleId))).ToListAsync();
 
         foreach (var user in existingUsers)
         {
@@ -51,7 +53,7 @@ public static class SeedData<TKey> where TKey : IEquatable<TKey>
         }
     }
 
-    private static async Task<IdentityResult> EnsureRoleAsync(IServiceProvider serviceProvider, TKey uid, string roleName, RoleClaimType roleClaimType)
+    private static async Task<IdentityResult> EnsureRoleAsync(IServiceProvider serviceProvider, TKey uid, string roleName, RoleClaimType roleClaimType, AppDbContext<TKey> context)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<AppRole<TKey>>>();
         IdentityResult IR;
@@ -62,11 +64,19 @@ public static class SeedData<TKey> where TKey : IEquatable<TKey>
             ClaimValue = roleClaimType,
         };
 
-        var existedRole = await roleManager.FindByNameAsync(roleName);
+        var existedRole = await context.Roles
+            .Include(r => r.RoleClaims)
+            .FirstOrDefaultAsync(r => r.Name == roleName);
 
         if (existedRole is not null)
         {
+            var previousRoleClaims = existedRole.RoleClaims;
             existedRole.RoleClaims?.Clear();
+            if (previousRoleClaims is not null)
+            {
+                context.RoleClaims.RemoveRange(previousRoleClaims);
+                await context.SaveChangesAsync();
+            }
         }
         else
         {
@@ -89,6 +99,7 @@ public static class SeedData<TKey> where TKey : IEquatable<TKey>
 
         existedRole.RoleClaims ??= [];
         existedRole.RoleClaims.Add(newRoleClaim);
+        IR = await context.SaveChangesAsync() > 0 ? IdentityResult.Success : IdentityResult.Failed(new IdentityError { Description = $"Role {roleName} could not be updated." });
 
         var userManager = serviceProvider.GetRequiredService<UserManager<AppUser<TKey>>>();
 

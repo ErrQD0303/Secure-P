@@ -78,13 +78,13 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
             b.HasOne(ur => ur.User)
                 .WithMany(u => u.UserRoles)
                 .HasForeignKey(ur => ur.UserId)
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.NoAction)
                 .IsRequired();
 
             b.HasOne(ur => ur.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Cascade)
+                .OnDelete(DeleteBehavior.NoAction)
                 .IsRequired();
         });
 
@@ -141,6 +141,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
             b.Property(pr => pr.HourlyRate).HasDefaultValue(0.0);
             b.Property(pr => pr.DailyRate).HasDefaultValue(0.0);
             b.Property(pr => pr.MonthlyRate).HasDefaultValue(0.0);
+            b.Property(pr => pr.ConcurrencyStamp).IsConcurrencyToken();
         });
 
         builder.Entity<ParkingLocationRate<TKey>>(b =>

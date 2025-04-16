@@ -31,6 +31,13 @@ public enum RoleClaimType
     ReadParkingLocation = 1 << 11,
     UpdateParkingLocation = 1 << 12,
     DeleteParkingLocation = 1 << 13,
+
+    // ParkingRate Controller claims
+    CreateParkingRate = 1 << 14,
+    ReadParkingRate = 1 << 15,
+    UpdateParkingRate = 1 << 16,
+    DeleteParkingRate = 1 << 17,
+
     NormalUser = AnonymousAccess | GetInfo | ResendEmailConfirmation | UpdateProfile | ChangePassword | ChangeAvatar,
-    Administrator = 1 << 14,
+    Administrator = 1 << 18,
 }

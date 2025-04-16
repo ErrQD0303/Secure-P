@@ -2,6 +2,7 @@ namespace SecureP.Shared;
 
 public class AppResponses
 {
+
     public class UserLogoutResponses
     {
         public static string UserLoggedOut => "User logged out";
@@ -108,5 +109,34 @@ public class AppResponses
     {
         public static string NoParkingRatesFound => "No parking rates found";
         public static string ParkingRatesFound => "Parking rates retrieved successfully.";
+    }
+
+    public class GetParkingRateResponses
+    {
+        public static string ParkingRateFound => "Parking rate retrieved successfully.";
+        public static string ParkingRateNotFound => "Parking rate not found";
+    }
+
+    public class CreateParkingRateResponses
+    {
+        public static string ParkingRateCreated => "Parking rate created successfully";
+        public static string ParkingRateNotCreated => "Parking rate not created";
+        public static string ModelValidationFailed => "Parking rate model validation failed";
+        public static string ParkingRateBodyNotFound => "Parking rate body cannot be empty";
+    }
+
+    public class DeleteParkingRateResponses
+    {
+        public static string ParkingRateDeleted => "Parking rate deleted successfully";
+        public static string ParkingRateNotDeleted => "Parking rate not deleted";
+    }
+
+    public class UpdateParkingRateResponses
+    {
+        public static string ParkingRateUpdated => "Parking rate updated successfully";
+        public static string ParkingRateNotUpdated => "Parking rate not updated";
+        public static string ParkingRateNotFound => "Parking rate not found";
+        public static string ParkingRateBodyNotFound => "Parking rate body cannot be empty";
+        public static string ModelValidationFailed => "Parking rate model validation failed";
     }
 }

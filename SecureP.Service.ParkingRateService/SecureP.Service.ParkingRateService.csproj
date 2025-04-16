@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\SecureP.Repository.Abstraction\SecureP.Repository.Abstraction.csproj" />
+    <ProjectReference Include="..\SecureP.Service.Abstraction\SecureP.Service.Abstraction.csproj" />
+    <ProjectReference Include="..\SecureP.Repository.ParkingRates\SecureP.Repository.ParkingRates.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

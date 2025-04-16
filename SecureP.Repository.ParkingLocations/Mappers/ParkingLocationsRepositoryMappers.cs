@@ -4,7 +4,7 @@ using SecureP.Repository.Abstraction.Models;
 
 namespace SecureP.Repository.ParkingLocations.Mappers;
 
-public static class ParkingLocationsRepositoryExtensions
+public static class ParkingLocationsRepositoryMappers
 {
     public static ParkingLocationValidationModel<TKey> ToParkingLocationValidationModel<TKey>(this CreateParkingLocationDto<TKey> parkingLocation) where TKey : IEquatable<TKey>
     {

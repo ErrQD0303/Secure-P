@@ -36,7 +36,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             {
                 Type t when t == typeof(Guid) => (TKey)(object)Guid.NewGuid(),
                 Type t when t == typeof(string) => (TKey)(object)Guid.NewGuid().ToString(),
-                _ => throw new InvalidOperationException("Invalid type for TKey")
+                _ => throw new NotSupportedException("Invalid type for TKey")
             },
             Name = parkingLocation.Name,
             Address = parkingLocation.Address,
@@ -99,6 +99,13 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             validationResult.Success = false;
             validationResult.Message = "Failed to create parking location due to database error.";
             _logger.LogError(ex, "CreateParkingLocationAsync: Database error occurred while creating parking location.");
+            return (validationResult, null);
+        }
+        catch (Exception ex)
+        {
+            validationResult.Success = false;
+            validationResult.Message = "An unexpected error occurred while creating parking location.";
+            _logger.LogError(ex, $"{nameof(CreateParkingLocationAsync)}: {ex.Message}");
             return (validationResult, null);
         }
     }

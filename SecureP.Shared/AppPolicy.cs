@@ -19,6 +19,10 @@ public class AppPolicy
     public const string ReadParkingLocation = "ReadParkingLocation";
     public const string UpdateParkingLocation = "UpdateParkingLocation";
     public const string DeleteParkingLocation = "DeleteParkingLocation";
+    public const string CreateParkingRate = "CreateParkingRate";
+    public const string ReadParkingRate = "ReadParkingRate";
+    public const string UpdateParkingRate = "UpdateParkingRate";
+    public const string DeleteParkingRate = "DeleteParkingRate";
     public const string NormalUser = "NormalUser";
     public const string Administrator = "Administrator";
 }

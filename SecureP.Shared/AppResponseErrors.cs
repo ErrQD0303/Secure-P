@@ -65,4 +65,21 @@ public class AppResponseErrors
             {"summary", "Request body cannot be empty"}
         };
     }
+
+    public class UpdateParkingRateErrors
+    {
+        public static Dictionary<string, object> UpdateParkingRateFailed => new()
+        {
+            {"summary", "Request body cannot be empty"}
+        };
+    }
+    public class CreateParkingRateErrors
+    {
+        public static Dictionary<string, object> CreateParkingRateFailed => new()
+        {
+            {"hourly_rate", "Hourly rate is required" },
+            {"daily_rate", "Daily rate is required" },
+            {"monthly_rate", "Monthly rate is required" },
+        };
+    }
 }

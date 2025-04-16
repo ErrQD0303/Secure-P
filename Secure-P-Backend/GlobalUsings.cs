@@ -14,7 +14,6 @@ global using Microsoft.AspNetCore.Mvc.Routing;
 global using Microsoft.AspNetCore.Identity;
 global using System.Security.Claims;
 global using Microsoft.AspNetCore.Authorization;
-global using Microsoft.AspNetCore.RateLimiting;
 global using Microsoft.AspNetCore.Http.Features;
 
 global using SecureP.Service.EmailService.Extensions;
@@ -29,3 +28,4 @@ global using SecureP.Shared;
 global using SecureP.Shared.Configures;
 global using SecureP.Shared.Mappers;
 global using SecureP.Service.Abstraction.Exceptions;
+global using SecureP.Service.ParkingRateService.Extensions;

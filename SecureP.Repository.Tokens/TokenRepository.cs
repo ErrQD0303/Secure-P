@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Repository.Abstraction;
 using SecureP.Shared;
-using SecureP.Shared.Configures;
 
 namespace SecureP.Repository.Tokens;
 
