@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace SecureP.Identity.Models.Dto;
 
-public class GetParkingZoneDto<TKey> where TKey : IEquatable<TKey>
+public class CreatedParkingZoneDto<TKey> where TKey : IEquatable<TKey>
 {
     [JsonPropertyName("id")]
     public virtual TKey Id { get; set; } = default!;
@@ -12,4 +12,6 @@ public class GetParkingZoneDto<TKey> where TKey : IEquatable<TKey>
     public virtual int Capacity { get; set; } = default!;
     [JsonPropertyName("available_spaces")]
     public virtual int AvailableSpaces { get; set; } = default!;
+    [JsonPropertyName("concurrency_stamp")]
+    public virtual string ConcurrencyStamp { get; set; } = default!;
 }
