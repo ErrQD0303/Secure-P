@@ -1,6 +1,4 @@
-using SecureP.Identity.Models.Dto;
 using SecureP.Identity.Models.Dto.SortModels;
-using SecureP.Service.ParkingRateService;
 using SecureP.Service.ParkingRateService.Mappers;
 
 namespace Secure_P_Backend.Controllers;
@@ -11,9 +9,9 @@ namespace Secure_P_Backend.Controllers;
 public class ParkingRateController : ControllerBase
 {
     public ILogger<ParkingRateController> Logger { get; private set; }
-    public ParkingRateService<string> ParkingRateService { get; private set; }
+    public IParkingRateService<string> ParkingRateService { get; private set; }
 
-    public ParkingRateController(ILogger<ParkingRateController> logger, ParkingRateService<string> parkingRateService)
+    public ParkingRateController(ILogger<ParkingRateController> logger, IParkingRateService<string> parkingRateService)
     {
         Logger = logger;
         ParkingRateService = parkingRateService;
@@ -93,7 +91,7 @@ public class ParkingRateController : ControllerBase
         Logger.LogInformation($"Getting all parking rates with page: {page}, limit: {limit}, sort: {sort}, desc: {desc}, search: {search}");
         var returnDto = await ParkingRateService.GetParkingRatesAsync(page, limit, sort, desc);
 
-        if (returnDto == null || returnDto.Items.Count == 0)
+        if (returnDto == null)
         {
             return NotFound(new GetAllParkingRateResponse<string>
             {
@@ -171,7 +169,7 @@ public class ParkingRateController : ControllerBase
         return Ok(
             new DeleteParkingRateResponse
             {
-                StatusCode = StatusCodes.Status200OK,
+                StatusCode = StatusCodes.Status204NoContent,
                 Message = AppResponses.DeleteParkingRateResponses.ParkingRateDeleted,
                 Success = true
             }

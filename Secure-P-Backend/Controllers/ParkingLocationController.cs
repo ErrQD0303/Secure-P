@@ -94,7 +94,7 @@ public class ParkingLocationController : ControllerBase
 
         var parkingLocations = await _parkingLocationService.GetParkingLocationsAsync(page, limit, sort, desc, search);
 
-        if (parkingLocations == null || parkingLocations.Items.Count == 0)
+        if (parkingLocations == null)
         {
             return NotFound(new GetAllParkingLocationResponse<string>
             {

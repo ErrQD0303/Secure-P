@@ -9,7 +9,7 @@ public static class ParkingRateServiceExtensions
     public static IServiceCollection AddParkingRateService<TKey>(this IServiceCollection services) where TKey : IEquatable<TKey>
     {
         services.AddParkingRateRepository<TKey>();
-        services.AddScoped<IParkingRateService<TKey>, ParkingRateService<TKey>>();
+        services.AddTransient<IParkingRateService<TKey>, ParkingRateService<TKey>>();
 
         return services;
     }

@@ -89,6 +89,7 @@ public static class ParkingRateServiceMappers
             HourlyRate = request.HourlyRate,
             DailyRate = request.DailyRate,
             MonthlyRate = request.MonthlyRate,
+            ConcurrencyStamp = request.ConcurrencyStamp,
         };
     }
 }
