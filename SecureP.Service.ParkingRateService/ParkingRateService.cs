@@ -208,7 +208,7 @@ public class ParkingRateService<TKey> : IParkingRateService<TKey> where TKey : I
         existingParkingRate.ConcurrencyStamp = Guid.NewGuid().ToString();
     }
 
-    private bool ValidateParkingRateModel(ParkingRateValidationModel<TKey> parkingRateValidationModel, out ValidationResult validationResult)
+    private static bool ValidateParkingRateModel(ParkingRateValidationModel<TKey> parkingRateValidationModel, out ValidationResult validationResult)
     {
         validationResult = new ValidationResult { Success = true };
 

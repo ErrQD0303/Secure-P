@@ -13,7 +13,7 @@ public static class ParkingLocationsRepositoryMappers
             Name = parkingLocation.Name,
             Address = parkingLocation.Address,
             ParkingRateId = parkingLocation.ParkingRateId,
-            ParkingZones = [.. parkingLocation.ParkingZones.Select(z => new ParkingZoneValidationModel
+            ParkingZones = [.. parkingLocation.ParkingZones.Select(z => new ParkingLocationParkingZoneValidationModel
             {
                 Name = z.Name,
                 Capacity = z.Capacity,
@@ -29,7 +29,7 @@ public static class ParkingLocationsRepositoryMappers
             Name = parkingLocation.Name ?? string.Empty,
             Address = parkingLocation.Address ?? string.Empty,
             ParkingRateId = parkingLocation.ParkingRateId,
-            ParkingZones = [.. parkingLocation.ParkingZones.Select(z => new ParkingZoneValidationModel
+            ParkingZones = [.. parkingLocation.ParkingZones.Select(z => new ParkingLocationParkingZoneValidationModel
             {
                 Name = z.Name,
                 Capacity = z.Capacity,

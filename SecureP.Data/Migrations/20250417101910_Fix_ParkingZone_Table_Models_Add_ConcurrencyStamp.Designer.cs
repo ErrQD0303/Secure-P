@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SecureP.Data;
 
@@ -11,9 +12,11 @@ using SecureP.Data;
 namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250417101910_Fix_ParkingZone_Table_Models_Add_ConcurrencyStamp")]
+    partial class Fix_ParkingZone_Table_Models_Add_ConcurrencyStamp
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

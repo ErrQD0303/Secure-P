@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using SecureP.Data;
 using SecureP.Repository.Abstraction;
 using SecureP.Repository.ParkingRates;
+using SecureP.Repository.ParkingZones;
 using SecureP.Service.Abstraction;
 using SecureP.Service.ParkingRateService;
+using SecureP.Service.ParkingZoneService;
 
 namespace RepositoryTests.Fixtures;
 
@@ -14,12 +16,16 @@ public class SqlServerTestDbFixture<TKey> : IDisposable where TKey : IEquatable<
     private readonly string _connectionString;
 
     public AppDbContext<TKey> Context { get; private set; }
+
     public IParkingRateRepository<TKey> ParkingRateRepository { get; private set; }
     public IParkingRateService<TKey> ParkingRateService { get; private set; }
 
+    public IParkingZoneRepository<TKey> ParkingZoneRepository { get; private set; }
+    public IParkingZoneService<TKey> ParkingZoneService { get; private set; }
+
     public SqlServerTestDbFixture()
     {
-        _connectionString = "Server=.;Database=SecurePTestDb;Integrated Security=true;TrustServerCertificate=True;MultipleActiveResultSets=true;";
+        _connectionString = "Server=.;Database=SecurePDb-Test;Integrated Security=true;TrustServerCertificate=True;MultipleActiveResultSets=true;";
 
         var options = new DbContextOptionsBuilder<AppDbContext<TKey>>()
             .UseSqlServer(_connectionString)
@@ -38,6 +44,13 @@ public class SqlServerTestDbFixture<TKey> : IDisposable where TKey : IEquatable<
         {
             builder.AddConsole();
         });
+
+        var parkingZoneRepositoryLogger = loggerFactory.CreateLogger<ParkingZoneRepository<TKey>>();
+        ParkingZoneRepository = new ParkingZoneRepository<TKey>(parkingZoneRepositoryLogger, Context);
+
+        var parkingZoneServiceLogger = loggerFactory.CreateLogger<ParkingZoneService<TKey>>();
+        ParkingZoneService = new ParkingZoneService<TKey>(parkingZoneServiceLogger, ParkingZoneRepository);
+
         var parkingRateRepositoryLogger = loggerFactory.CreateLogger<ParkingRateRepository<TKey>>();
         ParkingRateRepository = new ParkingRateRepository<TKey>(parkingRateRepositoryLogger, Context);
 

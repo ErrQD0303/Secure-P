@@ -168,6 +168,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
             b.Property(pz => pz.Name).HasMaxLength(256);
             b.Property(pz => pz.AvailableSpaces).HasDefaultValue(0);
             b.Property(pz => pz.Capacity).HasDefaultValue(0);
+            b.Property(pz => pz.ConcurrencyStamp).IsConcurrencyToken();
         });
 
         builder.Entity<AppUserParkingSubscription<TKey>>(b =>

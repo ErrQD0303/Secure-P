@@ -7,6 +7,7 @@ public class ParkingZone<TKey, TPLKey> where TKey : IEquatable<TKey> where TPLKe
     public virtual TPLKey? ParkingLocationId { get; set; } = default!;
     public virtual int Capacity { get; set; } = default!;
     public virtual int AvailableSpaces { get; set; } = default!;
+    public virtual string ConcurrencyStamp { get; set; } = default!;
 
     // Navigation properties
     public virtual ParkingLocation<TPLKey>? ParkingLocation { get; set; } = default!;

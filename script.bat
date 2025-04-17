@@ -1,12 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "classLibs=tests/ApiTests"
+set "classLibs=SecureP.Repository.ParkingZones SecureP.Service.ParkingZoneService"
 
-for %%l in (%classlibs%) do (
-    dotnet new xunit -o %%l
+for %%l in (%classLibs%) do (
+    dotnet new classlib -n %%l
     dotnet sln add %%l/%%l.csproj
-    dotnet add %%l/%%l.csproj package Microsoft.AspNetCore.Mvc.Testing
 )
+
+dotnet add SecureP.Repository.ParkingZones/SecureP.Repository.ParkingZones.csproj reference SecureP.Repository.Abstraction/SecureP.Repository.Abstraction.csproj
+dotnet add SecureP.Service.ParkingZoneService/SecureP.Service.ParkingZoneService.csproj reference SecureP.Service.Abstraction/SecureP.Service.Abstraction.csproj
+dotnet add SecureP.Service.ParkingZoneService/SecureP.Service.ParkingZoneService.csproj reference SecureP.Repository.Abstraction/SecureP.Repository.Abstraction.csproj
 
 endlocal
