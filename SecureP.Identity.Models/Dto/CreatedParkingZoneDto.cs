@@ -12,6 +12,8 @@ public class CreatedParkingZoneDto<TKey> where TKey : IEquatable<TKey>
     public virtual int Capacity { get; set; } = default!;
     [JsonPropertyName("available_spaces")]
     public virtual int AvailableSpaces { get; set; } = default!;
+    [JsonPropertyName("parking_location_id")]
+    public virtual TKey? ParkingLocationId { get; set; } = default!;
     [JsonPropertyName("concurrency_stamp")]
     public virtual string ConcurrencyStamp { get; set; } = default!;
 }

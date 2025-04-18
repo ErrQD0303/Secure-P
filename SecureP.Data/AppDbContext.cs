@@ -110,7 +110,7 @@ public class AppDbContext<TKey> : IdentityDbContext<AppUser<TKey>, AppRole<TKey>
             b.HasMany(pl => pl.ParkingLocationRates)
                 .WithOne(plr => plr.ParkingLocation)
                 .HasForeignKey(plr => plr.ParkingLocationId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             b.HasMany(pl => pl.ParkingZones)
                 .WithOne(pz => pz.ParkingLocation)

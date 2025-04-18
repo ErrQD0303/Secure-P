@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SecureP.Identity.Models;
 using SecureP.Identity.Models.Dto;
@@ -6,6 +7,7 @@ using SecureP.Identity.Models.Dto.SortModels;
 using SecureP.Identity.Models.Result;
 using SecureP.Repository.Abstraction;
 using SecureP.Repository.Abstraction.Models;
+using SecureP.Repository.ParkingZones;
 using SecureP.Service.Abstraction;
 using SecureP.Service.ParkingZoneService.Mappers;
 
@@ -15,16 +17,19 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
 {
     private ILogger<ParkingZoneService<TKey>> Logger { get; }
     private IParkingZoneRepository<TKey> ParkingZoneRepository { get; }
+    private IParkingLocationRepository<TKey> ParkingLocationRepository { get; }
 
-    public ParkingZoneService(ILogger<ParkingZoneService<TKey>> logger, IParkingZoneRepository<TKey> parkingZoneRepository)
+    public ParkingZoneService(ILogger<ParkingZoneService<TKey>> logger, IParkingZoneRepository<TKey> parkingZoneRepository, IParkingLocationRepository<TKey> parkingLocationRepository)
     {
         Logger = logger;
         ParkingZoneRepository = parkingZoneRepository;
+        ParkingLocationRepository = parkingLocationRepository;
     }
 
     public async Task<(ValidationResult, CreatedParkingZoneDto<TKey>?)> CreateParkingZoneAsync(CreateParkingZoneDto<TKey> createParkingZoneDto)
     {
-        if (!ValidateParkingZoneModel(createParkingZoneDto.ToParkingZoneValidationModel(), out var validationResult))
+        var (isValid, validationResult) = await ValidateParkingZoneModelAsync(createParkingZoneDto.ToParkingZoneValidationModel());
+        if (!isValid)
         {
             Logger.LogError($"{nameof(CreateParkingZoneAsync)}: Validation failed for parking zone model.");
             return (validationResult, null);
@@ -139,7 +144,8 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
 
     public async Task<ValidationResult> UpdateParkingZoneAsync(UpdateParkingZoneDto<TKey> updateParkingZoneDto)
     {
-        if (!ValidateParkingZoneModel(updateParkingZoneDto.ToParkingZoneValidationModel(), out var validationResult))
+        var (isValid, validationResult) = await ValidateParkingZoneModelAsync(updateParkingZoneDto.ToParkingZoneValidationModel());
+        if (!isValid)
         {
             Logger.LogError($"{nameof(UpdateParkingZoneAsync)}: Validation failed for parking zone model.");
             return validationResult;
@@ -183,9 +189,9 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
     }
 
 
-    private static bool ValidateParkingZoneModel(ParkingZoneValidationModel<TKey> validationModel, out ValidationResult validationResult)
+    private async Task<(bool, ValidationResult)> ValidateParkingZoneModelAsync(ParkingZoneValidationModel<TKey> validationModel)
     {
-        validationResult = new ValidationResult { Success = true };
+        var validationResult = new ValidationResult { Success = true };
 
         if (validationModel.Id is null || validationModel.Id.Equals(default))
         {
@@ -201,7 +207,7 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
             validationResult.Errors.Add("name", "Name cannot be null or empty.");
         }
 
-        if (validationModel.Capacity < 0)
+        if (validationModel.Capacity < 1)
         {
             validationResult.Success = false;
             validationResult.Errors ??= [];
@@ -222,17 +228,25 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
             validationResult.Errors.Add("available_spaces", "Available Spaces cannot be greater than Capacity.");
         }
 
-        return validationResult.Success;
+        var parkingLocationIds = (await ParkingLocationRepository.GetParkingLocationsAsync())?.Items.Select(x => x.Id).ToList() ?? [];
+        if (validationModel.ParkingLocationId != null && !parkingLocationIds.Contains(validationModel.ParkingLocationId))
+        {
+            validationResult.Success = false;
+            validationResult.Errors ??= [];
+            validationResult.Errors.Add("parking_location_id", "Parking Location Id does not exist.");
+        }
+
+        return (validationResult.Success, validationResult);
     }
 
-    private void UpdateExistingParkingZone(ParkingZone<TKey> existingParkingZone, UpdateParkingZoneDto<TKey> parkingZone)
+    private static void UpdateExistingParkingZone(ParkingZone<TKey> existingParkingZone, UpdateParkingZoneDto<TKey> parkingZone)
     {
         if (existingParkingZone.ConcurrencyStamp != parkingZone.ConcurrencyStamp)
         {
             throw new DbUpdateConcurrencyException($"Concurrency stamp mismatch. Expected: {existingParkingZone.ConcurrencyStamp}, Actual: {parkingZone.ConcurrencyStamp}");
         }
 
-        if (string.IsNullOrEmpty(parkingZone.Name) && parkingZone.Name != existingParkingZone.Name)
+        if (parkingZone.Name != existingParkingZone.Name)
         {
             existingParkingZone.Name = parkingZone.Name;
         }
@@ -245,6 +259,12 @@ public class ParkingZoneService<TKey> : IParkingZoneService<TKey> where TKey : I
         if (parkingZone.AvailableSpaces != existingParkingZone.AvailableSpaces)
         {
             existingParkingZone.AvailableSpaces = parkingZone.AvailableSpaces;
+        }
+
+        if (parkingZone.ParkingLocationId is null || (parkingZone.ParkingLocationId != null && !parkingZone.ParkingLocationId.Equals(default) &&
+            !parkingZone.ParkingLocationId.Equals(existingParkingZone.ParkingLocationId)))
+        {
+            existingParkingZone.ParkingLocationId = parkingZone.ParkingLocationId;
         }
 
         existingParkingZone.ConcurrencyStamp = Guid.NewGuid().ToString();

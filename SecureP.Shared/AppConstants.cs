@@ -118,5 +118,10 @@ public static class AppConstants
         {
             public const string DefaultRoute = "parking-rate";
         }
+
+        public class ParkingZoneController
+        {
+            public const string DefaultRoute = "parking-zone";
+        }
     }
 }

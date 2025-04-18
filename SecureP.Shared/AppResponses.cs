@@ -139,4 +139,38 @@ public class AppResponses
         public static string ParkingRateBodyNotFound => "Parking rate body cannot be empty";
         public static string ModelValidationFailed => "Parking rate model validation failed";
     }
+    public class CreateParkingZoneResponses
+    {
+        public static string ParkingZoneCreated => "Parking rate created successfully";
+        public static string ParkingZoneNotCreated => "Parking rate not created";
+        public static string ModelValidationFailed => "Parking rate model validation failed";
+        public static string ParkingZoneBodyNotFound => "Parking rate body cannot be empty";
+    }
+
+    public class DeleteParkingZoneResponses
+    {
+        public static string ParkingZoneDeleted => "Parking zone deleted successfully";
+        public static string ParkingZoneNotDeleted => "Parking zone not deleted";
+    }
+
+    public class UpdateParkingZoneResponses
+    {
+        public static string ParkingZoneUpdated => "Parking zone updated successfully";
+        public static string ParkingZoneNotUpdated => "Parking zone not updated";
+        public static string ParkingZoneNotFound => "Parking zone not found";
+        public static string ParkingZoneBodyNotFound => "Parking zone body cannot be empty";
+        public static string ModelValidationFailed => "Parking zone model validation failed";
+    }
+
+    public class GetParkingZoneResponses
+    {
+        public static string ParkingZoneFound => "Parking zone retrieved successfully.";
+        public static string ParkingZoneNotFound => "Parking zone not found";
+    }
+
+    public class GetAllParkingZoneResponses
+    {
+        public static string NoParkingZonesFound => "No parking zones found";
+        public static string ParkingZonesFound => "Parking zones retrieved successfully.";
+    }
 }

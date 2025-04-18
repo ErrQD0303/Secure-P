@@ -9,7 +9,7 @@ public class ParkingRate<TKey> where TKey : IEquatable<TKey>
     public virtual double HourlyRate { get; set; }
     public virtual double DailyRate { get; set; }
     public virtual double MonthlyRate { get; set; }
-    public virtual string ConcurrencyStamp { get; set; } = default!;
+    public virtual string? ConcurrencyStamp { get; set; } = default!;
 
     // Navigation properties
     public virtual ICollection<ParkingLocationRate<TKey>> ParkingLocationRates { get; set; } = default!;

@@ -6,4 +6,5 @@ public class CreateParkingZoneDto<TKey> where TKey : IEquatable<TKey>
     public virtual string Name { get; set; } = default!;
     public virtual int Capacity { get; set; } = default!;
     public virtual int AvailableSpaces { get; set; } = default!;
+    public virtual TKey? ParkingLocationId { get; set; } = default!;
 }

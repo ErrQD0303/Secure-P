@@ -23,6 +23,10 @@ public class AppPolicy
     public const string ReadParkingRate = "ReadParkingRate";
     public const string UpdateParkingRate = "UpdateParkingRate";
     public const string DeleteParkingRate = "DeleteParkingRate";
+    public const string CreateParkingZone = "CreateParkingZone";
+    public const string ReadParkingZone = "ReadParkingZone";
+    public const string UpdateParkingZone = "UpdateParkingZone";
+    public const string DeleteParkingZone = "DeleteParkingZone";
     public const string NormalUser = "NormalUser";
     public const string Administrator = "Administrator";
 }

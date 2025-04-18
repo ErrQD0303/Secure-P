@@ -6,5 +6,6 @@ public class UpdateParkingZoneDto<TKey> where TKey : IEquatable<TKey>
     public string Name { get; set; } = default!;
     public int Capacity { get; set; } = default!;
     public int AvailableSpaces { get; set; } = default!;
+    public TKey? ParkingLocationId { get; set; } = default!;
     public string ConcurrencyStamp { get; set; } = default!;
 }

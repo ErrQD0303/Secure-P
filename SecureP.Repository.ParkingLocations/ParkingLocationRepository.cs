@@ -57,7 +57,9 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 },
                 Name = zone.Name,
                 Capacity = zone.Capacity,
-                AvailableSpaces = zone.AvailableSpaces
+                AvailableSpaces = zone.AvailableSpaces,
+                ParkingLocationId = newParkingLocation.Id,
+                ConcurrencyStamp = Guid.NewGuid().ToString(),
             });
         }
 
@@ -184,6 +186,16 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             return false;
         }
 
+        var parkingLocationRates = await _context.ParkingLocationRates
+            .Where(plr => plr.ParkingLocationId != null && plr.ParkingLocationId.Equals(parkingLocation.Id))
+            .ToListAsync();
+        var parkingZones = await _context.ParkingZones
+            .Where(pz => pz.ParkingLocationId!.Equals(parkingLocation.Id))
+            .ToListAsync();
+
+        _context.ParkingLocationRates.RemoveRange(parkingLocationRates);
+        parkingZones.ForEach(pz => pz.ParkingLocationId = default!);
+        _context.ParkingZones.UpdateRange(parkingZones);
         _context.ParkingLocations.Remove(parkingLocation);
         return (await _context.SaveChangesAsync()) > 0;
     }
@@ -219,7 +231,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         page = page < 1 ? 0 : page - 1; // Adjust for zero-based index
 
-        if (page < 0 || limit <= 0)
+        if (page < 0)
         {
             _logger.LogWarning("GetParkingLocationsAsync: Invalid pagination parameters.");
             return null;
@@ -293,6 +305,11 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         }
 
         var totalParkingLocations = await parkingLocations.CountAsync();
+
+        if (limit < 1)
+        {
+            limit = totalParkingLocations;
+        }
 
         parkingLocations = parkingLocations.Skip(page * limit).Take(limit);
 

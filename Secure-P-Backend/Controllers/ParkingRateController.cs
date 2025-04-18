@@ -12,6 +12,7 @@ public class ParkingRateController : ControllerBase
     public IParkingRateService<string> ParkingRateService { get; private set; }
 
     public ParkingRateController(ILogger<ParkingRateController> logger, IParkingRateService<string> parkingRateService)
+
     {
         Logger = logger;
         ParkingRateService = parkingRateService;
@@ -21,7 +22,7 @@ public class ParkingRateController : ControllerBase
     [Authorize(Policy = AppPolicy.CreateParkingRate)]
     public async Task<IActionResult> CreateParkingRate([FromBody] CreateParkingRateRequest request)
     {
-        // Logic to create a parking location
+        // Logic to create a parking rate
         Logger.LogInformation("Creating new parking rate");
 
         if (request == null)
@@ -60,8 +61,8 @@ public class ParkingRateController : ControllerBase
     [Authorize(Policy = AppPolicy.ReadParkingRate)]
     public async Task<IActionResult> GetParkingRateById(string id)
     {
-        // Logic to get a parking location by ID
-        Logger.LogInformation($"Getting parking location with ID: {id}");
+        // Logic to get a parking rate by ID
+        Logger.LogInformation($"Getting parking rate with ID: {id}");
 
         var parkingRate = await ParkingRateService.GetParkingRateByIdAsync(id);
 
@@ -114,7 +115,7 @@ public class ParkingRateController : ControllerBase
     [Authorize(Policy = AppPolicy.UpdateParkingRate)]
     public async Task<IActionResult> UpdateParkingRate(string id, [FromBody] UpdateParkingRateRequest<string> request)
     {
-        // Logic to update a parking location
+        // Logic to update a parking rate
         Logger.LogInformation($"Updating parking rate with ID: {id}");
 
         if (request == null)
@@ -153,7 +154,7 @@ public class ParkingRateController : ControllerBase
     [Authorize(Policy = AppPolicy.DeleteParkingRate)]
     public async Task<IActionResult> DeleteParkingRate(string id)
     {
-        // Logic to delete a parking location
+        // Logic to delete a parking rate
         Logger.LogInformation($"Deleting parking rate with ID: {id}");
 
         if (!await ParkingRateService.DeleteParkingRateAsync(id))

@@ -73,6 +73,7 @@ public class AppResponseErrors
             {"summary", "Request body cannot be empty"}
         };
     }
+
     public class CreateParkingRateErrors
     {
         public static Dictionary<string, object> CreateParkingRateFailed => new()
@@ -80,6 +81,25 @@ public class AppResponseErrors
             {"hourly_rate", "Hourly rate is required" },
             {"daily_rate", "Daily rate is required" },
             {"monthly_rate", "Monthly rate is required" },
+        };
+    }
+
+    public class CreateParkingZoneErrors
+    {
+        public static Dictionary<string, object> CreateParkingZoneFailed => new()
+        {
+            {"name", "Parking zone name is required" },
+            {"parking_location_id", "Parking location id is required" },
+            {"capacity", "Parking zone capacity is required" },
+            {"available_spaces", "Parking zone available spaces is required" },
+        };
+    }
+
+    public class UpdateParkingZoneErrors
+    {
+        public static Dictionary<string, object> UpdateParkingZoneFailed => new()
+        {
+            {"summary", "Request body cannot be empty"}
         };
     }
 }

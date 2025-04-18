@@ -4,10 +4,10 @@ namespace SecureP.Service.Abstraction.Entities;
 
 public class CreateParkingRateRequest
 {
-    [JsonPropertyName("HourlyRate")]
+    [JsonPropertyName("hourly_rate")]
     public double HourlyRate { get; set; }
-    [JsonPropertyName("DailyRate")]
+    [JsonPropertyName("daily_rate")]
     public double DailyRate { get; set; }
-    [JsonPropertyName("MonthlyRate")]
+    [JsonPropertyName("monthly_rate")]
     public double MonthlyRate { get; set; }
 }

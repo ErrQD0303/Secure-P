@@ -37,7 +37,11 @@ public enum RoleClaimType
     ReadParkingRate = 1 << 15,
     UpdateParkingRate = 1 << 16,
     DeleteParkingRate = 1 << 17,
+    CreateParkingZone = 1 << 18,
+    ReadParkingZone = 1 << 19,
+    UpdateParkingZone = 1 << 20,
+    DeleteParkingZone = 1 << 21,
 
     NormalUser = AnonymousAccess | GetInfo | ResendEmailConfirmation | UpdateProfile | ChangePassword | ChangeAvatar,
-    Administrator = 1 << 18,
+    Administrator = 1 << 22,
 }

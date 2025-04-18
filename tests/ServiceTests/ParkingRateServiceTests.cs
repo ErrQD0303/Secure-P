@@ -1,8 +1,7 @@
-﻿using RepositoryTests.Fixtures;
-using SecureP.Identity.Models.Dto;
+﻿using SecureP.Identity.Models.Dto;
 using SecureP.Identity.Models.Dto.SortModels;
 using SecureP.Identity.Models.Result;
-using SecureP.Service.Abstraction.Entities;
+using ServiceTests.Fixtures;
 
 namespace ServiceTests;
 

@@ -9,7 +9,7 @@ public interface IParkingLocationRepository<TKey>
     where TKey : IEquatable<TKey>
 {
     Task<GetParkingLocationDto<TKey>?> GetParkingLocationByIdAsync(TKey id);
-    Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int page, int limit, ParkingLocationOrderBy sort, bool desc, string? search = null);
+    Task<GetAllParkingLocationsDto<TKey>?> GetParkingLocationsAsync(int page = 1, int limit = -1, ParkingLocationOrderBy sort = ParkingLocationOrderBy.Name, bool desc = false, string? search = null);
     Task<(ValidationResult, ParkingLocation<TKey>?)> CreateParkingLocationAsync(CreateParkingLocationDto<TKey> parkingLocation);
     Task<ValidationResult> UpdateParkingLocationAsync(TKey id, UpdateParkingLocationDto<TKey> parkingLocation);
     Task<bool> DeleteParkingLocationAsync(TKey id);
