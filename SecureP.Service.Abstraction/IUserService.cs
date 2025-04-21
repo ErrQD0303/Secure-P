@@ -7,6 +7,8 @@ namespace SecureP.Service.Abstraction;
 public interface IUserService<TKey> where TKey : IEquatable<TKey>
 {
     Task<AppUser<TKey>?> GetUserByIdAsync(TKey id);
+    Task<List<string>> GetUserPermissionsAsync(TKey id);
+    Task<List<string>> GetUserRolesAsync(TKey id);
     Task<AppUser<TKey>?> GetUserByEmailAsync(string email);
     Task<AppUser<TKey>?> GetUserByNameAsync(string username);
     Task<IEnumerable<AppUser<TKey>>> GetUsersAsync();

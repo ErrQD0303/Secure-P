@@ -10,6 +10,9 @@ public class GetUserInfoResponse<TKey> where TKey : IEquatable<TKey>
     public Dictionary<string, string> Errors { get; set; } = default!;
     public GetUserInfoResponseAppUser<TKey> User { get; set; } = default!;
 }
+
+
+
 public class GetUserInfoResponseAppUser<TKey> where TKey : IEquatable<TKey>
 {
     [JsonPropertyName("id")]
@@ -39,5 +42,10 @@ public class GetUserInfoResponseAppUser<TKey> where TKey : IEquatable<TKey>
     [JsonPropertyName("licensePlateNumber")]
     public ICollection<string> UserLicensePlates
     { get; set; } = default!;
+    [JsonPropertyName("avatar")]
     public string? Avatar { get; set; }
+    [JsonPropertyName("roles")]
+    public List<string> Roles { get; set; } = default!;
+    [JsonPropertyName("permissions")]
+    public List<string> Permissions { get; set; } = default!;
 }

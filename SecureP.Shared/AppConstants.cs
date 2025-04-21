@@ -3,6 +3,7 @@ namespace SecureP.Shared;
 public static class AppConstants
 {
     public static IdentityEntityFrameworkCoreConstants IdentityEntityFrameworkCore { get; } = new IdentityEntityFrameworkCoreConstants();
+    public const string DefaultCacheInstanceName = "SecureP-Cache";
     public const string DefaultLoginProvider = "SecureP";
     public const string DefaultRoutePrefix = "api";
     public const bool EnableGDPR = true;
@@ -18,6 +19,25 @@ public static class AppConstants
     {
         public readonly string DefaultSchema = "Identity";
     }
+
+    public class CacheOptions
+    {
+        public static long AbsoluteExpirationRelativeToNow { get; set; } = 60 * 60 * 24; // 4 hours
+        public static long SlidingExpiration { get; set; } = 60 * 30; // 30 minutes
+
+        public class RedisCacheOptions
+        {
+            public const string SectionName = "REDIS";
+            public static string GetConfiguration(string serverUrl, string user, string password) => $"{serverUrl},user={user},password={password}";
+        }
+    }
+
+    public class CachePermission
+    {
+        public const string RedisKeyName = DefaultCacheInstanceName + "-Permissions";
+        public static string GetRedisKey(string userId) => $"{RedisKeyName}_{userId}";
+    }
+
     public class SupportEmailType
     {
         public const string Default = "Normal";

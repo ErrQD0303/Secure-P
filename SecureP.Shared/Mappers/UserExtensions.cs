@@ -60,7 +60,7 @@ namespace SecureP.Shared.Mappers
             };
         }
 
-        public static GetUserInfoResponseAppUser<TKey> ToGetUserInfoResponseAppUser<TKey>(this AppUser<TKey> user) where TKey : IEquatable<TKey>
+        public static GetUserInfoResponseAppUser<TKey> ToGetUserInfoResponseAppUser<TKey>(this AppUser<TKey> user, List<string> roles, List<string> permissions) where TKey : IEquatable<TKey>
         {
             return new GetUserInfoResponseAppUser<TKey>
             {
@@ -77,7 +77,9 @@ namespace SecureP.Shared.Mappers
                 FullName = user.FullName,
                 PostCode = user.PostCode,
                 UserLicensePlates = [.. user.UserLicensePlates?.Select(lp => lp.LicensePlateNumber) ?? []],
-                Avatar = user.Avatar
+                Avatar = user.Avatar,
+                Roles = roles,
+                Permissions = permissions
             };
         }
 

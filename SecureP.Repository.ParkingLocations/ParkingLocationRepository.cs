@@ -26,6 +26,8 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
     {
         if (!ValidateParkingLocationModel(parkingLocation.ToParkingLocationValidationModel(), out var validationResult))
         {
+            validationResult.Success = false;
+            validationResult.Message = "Validation failed for parking location model.";
             _logger.LogError("CreateParkingLocationAsync: Validation failed for parking location model.");
             return (validationResult, null);
         }
@@ -135,6 +137,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         }
 
         int index = 0;
+        var newEntryErrors = new Dictionary<string, object>();
         foreach (var zone in model.ParkingZones)
         {
             Dictionary<string, string> zoneErrors = [];
@@ -156,17 +159,21 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
                 zoneErrors.Add("available_spaces", $"Parking zone available spaces cannot be negative.");
             }
 
+            if (zone.AvailableSpaces > zone.Capacity)
+            {
+                validationResult.Success = false;
+                zoneErrors.Add($"available_spaces", $"Parking zone available spaces cannot exceed capacity.");
+            }
+
             if (zoneErrors.Count > 0)
             {
-                var newEntryErrors = new Dictionary<string, object>
-                {
-                    { $"{index}", zoneErrors }
-                };
-                validationResult.Errors.Add($"parking_zones", newEntryErrors);
+                var zoneErrorsKey = zone.Id != null && !zone.Id.Equals(default) ? zone.Id?.ToString() ?? $"{index}" : $"{index}";
+                newEntryErrors.Add(zoneErrorsKey, zoneErrors);
             }
 
             ++index;
         }
+        validationResult.Errors.Add($"parking_zones", newEntryErrors);
 
         return validationResult.Success;
     }
@@ -373,14 +380,14 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
 
         if (!ValidateParkingLocationModel(parkingLocation.ToParkingLocationValidationModel(), out validationResult))
         {
-            _logger.LogError("UpdateParkingLocationAsync: Validation failed for parking location model.");
+            _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Validation failed for parking location model.");
             return validationResult;
         }
 
         if (!validationResult.Success)
         {
             validationResult.Message = "Validation failed for parking location model.";
-            _logger.LogError("UpdateParkingLocationAsync: Validation failed for parking location model.");
+            _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Validation failed for parking location model.");
             return validationResult;
         }
 
@@ -399,7 +406,7 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         {
             validationResult.Success = false;
             validationResult.Message = "Parking location not found.";
-            _logger.LogWarning($"UpdateParkingLocationAsync: Parking location with ID {id} not found.");
+            _logger.LogWarning($"{nameof(UpdateParkingLocationAsync)}: Parking location with ID {id} not found.");
 
             return validationResult;
         }
@@ -412,21 +419,35 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
             {
                 validationResult.Success = false;
                 validationResult.Message = "Failed to update parking location.";
-                _logger.LogError($"UpdateParkingLocationAsync: Failed to update parking location with ID {id}.");
+                _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Failed to update parking location with ID {id}.");
 
                 return validationResult;
             }
 
             validationResult.Success = true;
             validationResult.Message = "Parking location updated successfully.";
-            _logger.LogInformation($"UpdateParkingLocationAsync: Parking location with ID {id} updated successfully.");
+            _logger.LogInformation($"{nameof(UpdateParkingLocationAsync)}: Parking location with ID {id} updated successfully.");
         }
         catch (DbUpdateConcurrencyException ex)
         {
-            _logger.LogError($"UpdateParkingLocationAsync: Concurrency conflict during update with error: {ex.Message}");
+            _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Concurrency conflict during update with error: {ex.Message}");
             validationResult.Success = false;
             validationResult.Message = "Concurrency conflict occurred while updating parking location.";
             validationResult.Errors?.Add("concurrency_stamp", "Concurrency conflict occurred. Please try again.");
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Database error during update with error: {ex.Message}");
+            validationResult.Success = false;
+            validationResult.Message = "Database error occurred while updating parking location.";
+            validationResult.Errors?.Add("summary", "Database error occurred. Please try again.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"{nameof(UpdateParkingLocationAsync)}: Unexpected error during update with error: {ex.Message}");
+            validationResult.Success = false;
+            validationResult.Message = "An unexpected error occurred while updating parking location.";
+            validationResult.Errors?.Add("summary", "An unexpected error occurred. Please try again.");
         }
 
         return validationResult;
@@ -489,4 +510,10 @@ public class ParkingLocationRepository<TKey> : IParkingLocationRepository<TKey> 
         context.ParkingLocations.Update(existingParkingLocation);
         return await context.SaveChangesAsync();
     }
+}
+
+public enum ParkingLocationValidationType
+{
+    Create,
+    Update
 }

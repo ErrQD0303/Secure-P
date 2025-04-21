@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Identity.Models.Dto;
+using SecureP.Identity.Models.Enum;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
@@ -27,14 +28,16 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     private readonly IPasswordValidator<AppUser<TKey>> _passwordValidator;
     private readonly JwtConfigures _jwtConfigures;
     private readonly IEmailService _emailService;
+    private readonly RoleManager<AppRole<TKey>> _roleManager;
 
-    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailService emailService)
+    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailService emailService, RoleManager<AppRole<TKey>> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
         _passwordValidator = passwordValidator;
         _jwtConfigures = jwtConfiguresOptions.Value;
         _emailService = emailService;
+        _roleManager = roleManager;
     }
 
     public async Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
@@ -375,5 +378,46 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         }
 
         return IdentityResult.Failed(AppIdentityErrors.UnknownError);
+    }
+
+    public async Task<List<string>> GetUserPermissionsAsync(TKey id)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.Equals(id));
+        if (user == null) return [];
+
+        var userRolesName = await _userManager.GetRolesAsync(user);
+
+        if (userRolesName is null || userRolesName.Count == 0)
+        {
+            return [];
+        }
+
+        var requestUserRoles = await _roleManager.Roles
+            .Where(role => userRolesName.Contains(role.Name ?? string.Empty))
+            .Where(role => role.UserRoles.Any(ur => ur.UserId.Equals(user.Id)))
+            .Include(role => role.RoleClaims)
+            .ToListAsync() ?? [];
+
+        var permissions = new List<string>();
+        foreach (var roleClaim in requestUserRoles.SelectMany(role => role.RoleClaims))
+        {
+            foreach (var claimType in Enum.GetValues<RoleClaimType>().Cast<RoleClaimType>())
+            {
+                if (roleClaim.ClaimValue == RoleClaimType.Administrator || (claimType & roleClaim.ClaimValue) == claimType)
+                {
+                    permissions.Add(claimType.ToString());
+                }
+            }
+        }
+
+        return [.. permissions.Distinct()];
+    }
+
+    public async Task<List<string>> GetUserRolesAsync(TKey id)
+    {
+        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.Id.Equals(id));
+        if (user == null) return [];
+
+        return [.. await _userManager.GetRolesAsync(user)];
     }
 }

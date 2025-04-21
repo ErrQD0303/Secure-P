@@ -84,18 +84,18 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
             new(ClaimTypes.Email, user.Email!)
         };
 
-        claims.AddRange(userRoles.Where(r => r.Name != null).Select(role => new Claim(AppCustomClaims.Role, role.Name!)));
+        // claims.AddRange(userRoles.Where(r => r.Name != null).Select(role => new Claim(AppCustomClaims.Role, role.Name!)));
 
-        foreach (var roleClaim in userRoles.SelectMany(role => role.RoleClaims))
-        {
-            foreach (var claimType in Enum.GetValues<RoleClaimType>().Cast<RoleClaimType>())
-            {
-                if (roleClaim.ClaimValue == RoleClaimType.Administrator || (claimType & roleClaim.ClaimValue) == claimType)
-                {
-                    claims.Add(new Claim(AppCustomClaims.Permission, claimType.ToString()));
-                }
-            }
-        }
+        // foreach (var roleClaim in userRoles.SelectMany(role => role.RoleClaims))
+        // {
+        //     foreach (var claimType in Enum.GetValues<RoleClaimType>().Cast<RoleClaimType>())
+        //     {
+        //         if (roleClaim.ClaimValue == RoleClaimType.Administrator || (claimType & roleClaim.ClaimValue) == claimType)
+        //         {
+        //             claims.Add(new Claim(AppCustomClaims.Permission, claimType.ToString()));
+        //         }
+        //     }
+        // }
 
         var accessToken = JwtGenerator.GenerateJWTToken(_configuration["Jwt:Authority"] ?? throw new InvalidOperationException("Jwt Authority is missing"), _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt Audience is missing"), null, int.Parse(_configuration["Jwt:ExpirySeconds"] ?? throw new InvalidOperationException("Jwt ExpirySeconds is missing")), claims, jsonWebKey);
 
@@ -128,7 +128,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
             _ => throw new TokenServiceException("Invalid Token Type")
         };
 
-        await _tokenRepository.AddTokenAsync(refreshToken, user!.Id, tokenType, DateTime.UtcNow.AddDays(7), userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        await _tokenRepository.AddTokenAsync(refreshToken, user!.Id, tokenType, expiryDate, userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
     }
 
     public async Task<bool> ValidateAccessTokenAsync(string accessToken, string username)
