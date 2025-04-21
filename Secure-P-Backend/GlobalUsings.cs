@@ -29,3 +29,4 @@ global using SecureP.Shared.Configures;
 global using SecureP.Shared.Mappers;
 global using SecureP.Service.Abstraction.Exceptions;
 global using SecureP.Service.ParkingRateService.Extensions;
+global using SecureP.Cache.RedisCacheManager.Extensions;

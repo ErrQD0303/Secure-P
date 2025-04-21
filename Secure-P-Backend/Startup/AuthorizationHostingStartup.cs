@@ -1,4 +1,4 @@
-using SecureP.Identity.Models.Enum;
+using SecureP.Authorization;
 
 [assembly: HostingStartup(typeof(Secure_P_Backend.Startup.AuthorizationHostingStartup))]
 namespace Secure_P_Backend.Startup;
@@ -9,16 +9,7 @@ public class AuthorizationHostingStartup : IHostingStartup
     {
         builder.ConfigureServices((context, services) =>
         {
-            services.AddAuthorization(options =>
-            {
-                foreach (var roleClaim in Enum.GetValues<RoleClaimType>().Cast<RoleClaimType>())
-                {
-                    options.AddPolicy(roleClaim.ToString(), policy =>
-                    {
-                        policy.RequireClaim(AppCustomClaims.Permission, roleClaim.ToString());
-                    });
-                }
-            });
+            services.AddAppPermissionAuthorization<string>();
         });
     }
 }

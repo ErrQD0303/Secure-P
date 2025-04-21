@@ -160,6 +160,8 @@ public class IdentityController : ControllerBase
         }
 
         var user = await _userService.GetUserByIdAsync(userId);
+        var userRoles = await _userService.GetUserRolesAsync(userId);
+        var userPermissions = await _userService.GetUserPermissionsAsync(userId);
 
         if (user == null)
         {
@@ -176,7 +178,7 @@ public class IdentityController : ControllerBase
             StatusCode = StatusCodes.Status200OK,
             Success = "true",
             Message = AppResponses.GetUserInfoResponses.UserFound,
-            User = user.ToGetUserInfoResponseAppUser()
+            User = user.ToGetUserInfoResponseAppUser(userRoles, userPermissions)
         });
     }
 

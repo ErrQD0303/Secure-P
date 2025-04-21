@@ -34,6 +34,8 @@
     <ProjectReference Include="..\SecureP.Service.ParkingLocationService\SecureP.Service.ParkingLocationService.csproj" />
     <ProjectReference Include="..\SecureP.Service.ParkingRateService\SecureP.Service.ParkingRateService.csproj" />
     <ProjectReference Include="..\SecureP.Service.ParkingZoneService\SecureP.Service.ParkingZoneService.csproj" />
+    <ProjectReference Include="..\SecureP.Authorization\SecureP.Authorization.csproj" />
+    <ProjectReference Include="..\SecureP.Cache.RedisCacheManager\SecureP.Cache.RedisCacheManager.csproj" />
   </ItemGroup>
 
 </Project>
