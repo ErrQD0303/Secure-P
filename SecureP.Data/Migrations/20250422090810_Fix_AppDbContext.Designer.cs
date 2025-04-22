@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SecureP.Data;
 
@@ -11,9 +12,11 @@ using SecureP.Data;
 namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250422090810_Fix_AppDbContext")]
+    partial class Fix_AppDbContext
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -265,9 +268,6 @@ namespace SecureP.Data.Migrations
 
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
 
                     b.Property<double>("SubscriptionFee")
                         .HasColumnType("float");

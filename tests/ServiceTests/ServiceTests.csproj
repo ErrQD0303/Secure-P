@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\SecureP.Service.ParkingRateService\SecureP.Service.ParkingRateService.csproj" />
     <ProjectReference Include="..\..\SecureP.Service.ParkingZoneService\SecureP.Service.ParkingZoneService.csproj" />
     <ProjectReference Include="..\..\SecureP.Service.ParkingLocationService\SecureP.Service.ParkingLocationService.csproj" />
+    <ProjectReference Include="..\..\SecureP.Service.AppUserParkingSubscriptionService\SecureP.Service.AppUserParkingSubscriptionService.csproj" />
   </ItemGroup>
 
 </Project>

@@ -15,5 +15,5 @@ public class ParkingLocationRate<TKey> where TKey : IEquatable<TKey>
     // Navigation properties
     public virtual ParkingLocation<TKey> ParkingLocation { get; set; } = default!;
     public virtual ParkingRate<TKey> ParkingRate { get; set; } = default!;
-    public virtual ICollection<AppUserParkingSubscription<TKey>> UserParkingSubscriptions { get; set; } = default!;
+    // public virtual ICollection<AppUserParkingSubscription<TKey>> UserParkingSubscriptions { get; set; } = default!;
 }

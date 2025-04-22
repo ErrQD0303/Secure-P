@@ -51,6 +51,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureP.Cache.Abstraction",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureP.Cache.RedisCacheManager", "SecureP.Cache.RedisCacheManager\SecureP.Cache.RedisCacheManager.csproj", "{7D6BD691-AD04-403E-8263-E3FBD1E66191}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureP.Repository.AppUserParkingSubscriptions", "SecureP.Repository.AppUserParkingSubscriptions\SecureP.Repository.AppUserParkingSubscriptions.csproj", "{1906E068-47AD-47F0-990F-696A1ED1FE42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecureP.Service.AppUserParkingSubscriptionService", "SecureP.Service.AppUserParkingSubscriptionService\SecureP.Service.AppUserParkingSubscriptionService.csproj", "{E2827375-820C-44B8-8133-D852D979C66B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -337,6 +341,30 @@ Global
 		{7D6BD691-AD04-403E-8263-E3FBD1E66191}.Release|x64.Build.0 = Release|Any CPU
 		{7D6BD691-AD04-403E-8263-E3FBD1E66191}.Release|x86.ActiveCfg = Release|Any CPU
 		{7D6BD691-AD04-403E-8263-E3FBD1E66191}.Release|x86.Build.0 = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|x64.Build.0 = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Debug|x86.Build.0 = Debug|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|x64.ActiveCfg = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|x64.Build.0 = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|x86.ActiveCfg = Release|Any CPU
+		{1906E068-47AD-47F0-990F-696A1ED1FE42}.Release|x86.Build.0 = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|x64.Build.0 = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Debug|x86.Build.0 = Debug|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|x64.ActiveCfg = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|x64.Build.0 = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|x86.ActiveCfg = Release|Any CPU
+		{E2827375-820C-44B8-8133-D852D979C66B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

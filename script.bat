@@ -1,15 +1,21 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "classLibs=SecureP.Repository.ParkingZones SecureP.Service.ParkingZoneService"
+@REM set "classLibs=SecureP.Repository.AppUserParkingSubscriptions,SecureP.Service.AppUserParkingSubscriptionService"
 
-for %%l in (%classLibs%) do (
-    dotnet new classlib -n %%l
-    dotnet sln add %%l/%%l.csproj
+@REM for %%l in (%classLibs%) do (
+@REM     dotnet new classlib -o "%%l"
+@REM     dotnet sln add "%%l/%%l.csproj"
+@REM )
+
+set "dependencyLibs=SecureP.Repository.AppUserParkingSubscriptions-SecureP.Repository.Abstraction,SecureP.Service.AppUserParkingSubscriptionService-SecureP.Service.Abstraction,SecureP.Service.AppUserParkingSubscriptionService-SecureP.Repository.AppUserParkingSubscriptions,tests/ServiceTests-SecureP.Service.AppUserParkingSubscriptionService,SecureP.Repository.AppUserParkingSubscriptions-SecureP.Data"
+
+for %%l in (%dependencyLibs%) do (
+    for /f "tokens=1,2 delims=-" %%a in ("%%l") do (
+        set "libName=%%a"
+        set "libDependency=%%b"
+        dotnet add !libName! reference !libDependency!
+    )
 )
-
-dotnet add SecureP.Repository.ParkingZones/SecureP.Repository.ParkingZones.csproj reference SecureP.Repository.Abstraction/SecureP.Repository.Abstraction.csproj
-dotnet add SecureP.Service.ParkingZoneService/SecureP.Service.ParkingZoneService.csproj reference SecureP.Service.Abstraction/SecureP.Service.Abstraction.csproj
-dotnet add SecureP.Service.ParkingZoneService/SecureP.Service.ParkingZoneService.csproj reference SecureP.Repository.Abstraction/SecureP.Repository.Abstraction.csproj
 
 endlocal

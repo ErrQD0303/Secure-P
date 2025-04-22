@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Identity;
 
 namespace SecureP.Identity.Models;
 
-public class AppUser<TKey, TUserPS, TParkingLocation, TParkingZone> : IdentityUser<TKey>
-where TKey : IEquatable<TKey> where TUserPS : IEquatable<TUserPS> where TParkingLocation : IEquatable<TParkingLocation> where TParkingZone : IEquatable<TParkingZone>
+public class AppUser<TKey, TUserPS, TParkingZone> : IdentityUser<TKey>
+where TKey : IEquatable<TKey> where TUserPS : IEquatable<TUserPS> where TParkingZone : IEquatable<TParkingZone>
 {
     [Required]
     public virtual string FullName { get; set; } = default!;
@@ -29,11 +29,11 @@ where TKey : IEquatable<TKey> where TUserPS : IEquatable<TUserPS> where TParking
     { get; set; } = default!;
     public virtual ICollection<AppUserLicensePlate<TKey>> UserLicensePlates
     { get; set; } = default!;
-    public virtual ICollection<AppUserParkingSubscription<TUserPS, TKey, TParkingLocation, TParkingZone>> UserParkingSubscriptions
+    public virtual ICollection<AppUserParkingSubscription<TUserPS, TKey, TParkingZone>> UserParkingSubscriptions
     { get; set; } = default!;
 }
 
-public class AppUser<TKey> : AppUser<TKey, TKey, TKey, TKey>
+public class AppUser<TKey> : AppUser<TKey, TKey, TKey>
     where TKey : IEquatable<TKey>
 {
 }

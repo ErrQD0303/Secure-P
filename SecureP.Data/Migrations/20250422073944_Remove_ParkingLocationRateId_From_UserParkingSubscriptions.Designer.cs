@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SecureP.Data;
 
@@ -11,9 +12,11 @@ using SecureP.Data;
 namespace SecureP.Data.Migrations
 {
     [DbContext(typeof(AppDbContext<string>))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250422073944_Remove_ParkingLocationRateId_From_UserParkingSubscriptions")]
+    partial class Remove_ParkingLocationRateId_From_UserParkingSubscriptions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,10 +243,6 @@ namespace SecureP.Data.Migrations
                     b.Property<double>("ClampingFee")
                         .HasColumnType("float");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime2");
 
@@ -253,6 +252,10 @@ namespace SecureP.Data.Migrations
                     b.Property<string>("LicensePlate")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ParkingLocationRateId")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("ParkingLocationRate<string>Id");
 
                     b.Property<string>("ParkingZoneId")
                         .HasColumnType("nvarchar(450)");
@@ -266,9 +269,6 @@ namespace SecureP.Data.Migrations
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
                     b.Property<double>("SubscriptionFee")
                         .HasColumnType("float");
 
@@ -276,6 +276,8 @@ namespace SecureP.Data.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ParkingLocationRateId");
 
                     b.HasIndex("ParkingZoneId");
 
@@ -482,6 +484,10 @@ namespace SecureP.Data.Migrations
 
             modelBuilder.Entity("SecureP.Identity.Models.AppUserParkingSubscription<string>", b =>
                 {
+                    b.HasOne("SecureP.Identity.Models.ParkingLocationRate<string>", null)
+                        .WithMany("UserParkingSubscriptions")
+                        .HasForeignKey("ParkingLocationRateId");
+
                     b.HasOne("SecureP.Identity.Models.ParkingZone<string>", "ParkingZone")
                         .WithMany("UserParkingSubscriptions")
                         .HasForeignKey("ParkingZoneId")
@@ -578,6 +584,11 @@ namespace SecureP.Data.Migrations
                     b.Navigation("ParkingLocationRates");
 
                     b.Navigation("ParkingZones");
+                });
+
+            modelBuilder.Entity("SecureP.Identity.Models.ParkingLocationRate<string>", b =>
+                {
+                    b.Navigation("UserParkingSubscriptions");
                 });
 
             modelBuilder.Entity("SecureP.Identity.Models.ParkingRate<string>", b =>
