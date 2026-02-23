@@ -1,5 +1,8 @@
 namespace SecureP.Identity.Models.Enum;
 
+/// <summary>
+/// An enumeration that defines various role claim types used for authorization and access control within the SecureP application. Each value in the RoleClaimType enum represents a specific permission or access level that can be assigned to users or roles. The [Flags] attribute allows for combining multiple claim types using bitwise operations, enabling flexible and granular control over user permissions. This enum is used throughout the application to define policies and requirements for accessing different resources and performing various actions based on the assigned claims.
+/// </summary>
 [Flags]
 public enum RoleClaimType
 {

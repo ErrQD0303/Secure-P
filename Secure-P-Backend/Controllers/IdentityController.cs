@@ -3,6 +3,9 @@ using SecureP.Identity.Models; // Ensure this namespace is imported
 
 namespace Secure_P_Backend.Controllers;
 
+/// <summary>
+/// Controller that handles user identity-related operations such as registration, login, logout, email confirmation, password reset, and profile updates for the Secure-P Backend application. The IdentityController provides endpoints for managing user accounts and authentication processes, allowing users to securely access the application's features based on their subscription status and permissions. Each action method in this controller is designed to handle specific identity-related tasks while ensuring proper authorization and error handling mechanisms are in place to maintain the security and integrity of user data.
+/// </summary>
 [ApiController]
 [Route(AppConstants.AppController.IdentityController.DefaultRoute)]
 public class IdentityController : ControllerBase
@@ -22,6 +25,11 @@ public class IdentityController : ControllerBase
         _emailService = emailService;
     }
 
+    /// <summary>
+    /// Register a new user
+    /// </summary>
+    /// <param name="registerRequest"></param>
+    /// <returns></returns>
     [AllowAnonymous]
     [HttpPost(AppConstants.AppController.IdentityController.Register)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
@@ -29,41 +37,7 @@ public class IdentityController : ControllerBase
         _logger.LogInformation($"Registering user with email: {registerRequest.Email}");
         // Register user
         AppUser<string>? user = null;
-        try
-        {
-            user = await _userService.RegisterAsync(registerRequest);
-        }
-        catch (UserRegisterException ex)
-        {
-            var passwordErrors = ex.IdentityErrors
-                .Where(e => e.Code.StartsWith("Password"))
-                .Select(e => e.Description)
-                .Aggregate(string.Empty, (acc, desc) => acc + "\ndesc");
-            var normalErrors = ex.IdentityErrors.Where(e => !e.Code.StartsWith("Password")).ToDictionary(e => e.Code, e => e.Description);
-            var identityErrors = new Dictionary<string, string>(normalErrors)
-            {
-                { "Password", passwordErrors }
-            };
-
-            return BadRequest(new UserRegisterResponse<string>
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Success = "false",
-                Message = AppResponses.UserRegisterResponses.UserRegistrationFailed,
-                Errors = identityErrors.Union(AppResponseErrors.UserRegisterErrors.UserRegistrationFailed).ToDictionary(e => e.Key, e => e.Value)
-            });
-        }
-
-        if (user == null)
-        {
-            return BadRequest(new UserRegisterResponse<string>
-            {
-                StatusCode = StatusCodes.Status400BadRequest,
-                Success = "false",
-                Message = AppResponses.UserRegisterResponses.UserRegistrationFailed,
-                Errors = AppResponseErrors.UserRegisterErrors.UserRegistrationFailed
-            });
-        }
+        user = await _userService.RegisterAsync(registerRequest);
 
         var userDto = new UserRegisterResponse<string>
         {

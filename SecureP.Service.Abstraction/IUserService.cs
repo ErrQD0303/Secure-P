@@ -12,7 +12,12 @@ public interface IUserService<TKey> where TKey : IEquatable<TKey>
     Task<AppUser<TKey>?> GetUserByEmailAsync(string email);
     Task<AppUser<TKey>?> GetUserByNameAsync(string username);
     Task<IEnumerable<AppUser<TKey>>> GetUsersAsync();
-    Task<AppUser<TKey>?> RegisterAsync(RegisterRequest request);
+    /// <summary>
+    /// Register a new user with the provided registration details
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    Task<AppUser<TKey>> RegisterAsync(RegisterRequest request);
     Task<(bool Success, AppUser<TKey>? User)> LoginByEmailAsync(LoginByEmailRequest request);
     Task<(bool Success, AppUser<TKey>? User)> LoginByUsernameAsync(LoginByUsernameRequest request);
     Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request);

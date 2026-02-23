@@ -24,6 +24,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Exception handlers registration
+builder.Services.AddExceptionHandler<UserRegisterExceptionHandler>();
+
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -32,8 +37,11 @@ if (app.Environment.IsDevelopment())
     app.UseOpenApi();
     app.UseSwaggerUi(configure =>
     {
+        // {info.description}
         configure.DocumentTitle = "Secure-P Backend API";
+        // Path to swagger UI and JSON document
         configure.Path = "/swagger";
+        // Path to the JSON document that describes the API
         configure.DocumentPath = "/swagger/{documentName}/swagger.json";
         configure.DocExpansion = "list";
     });
@@ -51,6 +59,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCookiePolicy();
 
+app.UseExceptionHandler(); // Add global exception handling middleware
 app.UseRouting(); // Add routing middleware
 
 app.UseCors();

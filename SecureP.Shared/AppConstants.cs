@@ -1,5 +1,8 @@
 namespace SecureP.Shared;
 
+/// <summary>
+/// A static class that holds application-wide constants and configuration values used throughout the SecureP application.
+/// </summary>
 public static class AppConstants
 {
     public static IdentityEntityFrameworkCoreConstants IdentityEntityFrameworkCore { get; } = new IdentityEntityFrameworkCoreConstants();
@@ -9,6 +12,10 @@ public static class AppConstants
     public const bool EnableGDPR = true;
     public const string ImagesFolder = "images";
     public const string UserAvatarFolder = ImagesFolder + "/" + "user-avatar";
+
+    /// <summary>
+    /// The section name in your environment variables or appsettings.json where JWT configuration settings are stored. This constant is used to retrieve JWT settings such as Authority, Audience, Key, ExpirySseconds, and RefreshExpirySeconds for authentication and token generation purposes.
+    /// </summary>
     public const string JwtConfiguresSection = "Jwt";
     public const string DefaultAdminEmail = "admin@SecureP.com";
     public const string DefaultAdminPassword = "Admin@123";

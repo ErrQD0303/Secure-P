@@ -4,7 +4,7 @@ public class AppResponseErrors
 {
     public class UserRegisterErrors
     {
-        public static Dictionary<string, string> UserRegistrationFailed => new()
+        public static Dictionary<string, object> UserRegistrationFailed => new()
         {
             { "summary", "User registration failed" }
         };

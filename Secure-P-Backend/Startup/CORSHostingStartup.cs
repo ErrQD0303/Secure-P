@@ -1,6 +1,9 @@
 [assembly: HostingStartup(typeof(Secure_P_Backend.Startup.CORSHostingStartup))]
 namespace Secure_P_Backend.Startup;
 
+/// <summary>
+/// A hosting startup class that configures Cross-Origin Resource Sharing (CORS) services for the Secure-P Backend application.
+/// </summary>
 public class CORSHostingStartup : IHostingStartup
 {
     public void Configure(IWebHostBuilder builder)

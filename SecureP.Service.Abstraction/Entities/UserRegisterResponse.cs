@@ -7,7 +7,7 @@ public class UserRegisterResponse<TKey> where TKey : IEquatable<TKey>
     public int StatusCode { get; set; }
     public string Success { get; set; } = default!;
     public string Message { get; set; } = default!;
-    public Dictionary<string, string> Errors { get; set; } = default!;
+    public Dictionary<string, object> Errors { get; set; } = default!;
     public UserRegisterResponseAppUser<TKey> User { get; set; } = default!;
 
 }
