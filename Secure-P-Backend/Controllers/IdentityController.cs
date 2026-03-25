@@ -1,5 +1,6 @@
 using SecureP.Identity.Models.Enum;
-using SecureP.Identity.Models; // Ensure this namespace is imported
+using SecureP.Identity.Models;
+using SecureP.Identity.Models.Dto; // Ensure this namespace is imported
 
 namespace Secure_P_Backend.Controllers;
 
@@ -158,29 +159,21 @@ public class IdentityController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost(AppConstants.AppController.IdentityController.Login)]
-    public async Task<IActionResult> Login([FromRoute] LoginType loginType)
+    public async Task<IActionResult> Login([FromRoute(Name = "login-type")] LoginType loginType, [FromBody] LoginRequestDto loginRequest)
     {
         // Login user
-        Request.EnableBuffering();
-
-        using var reader = new StreamReader(Request.Body);
-        var body = await reader.ReadToEndAsync();
-        Request.Body.Position = 0;
-
-        var requestData = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(body);
-
-        _logger.LogInformation($"Logging in user: {requestData?.email ?? requestData?.username ?? string.Empty}");
+        _logger.LogInformation($"Logging in user: {loginRequest.Email ?? loginRequest.Username ?? string.Empty}");
         var (loginResult, user) = loginType switch
         {
             LoginType.Email => await _userService.LoginByEmailAsync(new LoginByEmailRequest
             {
-                Email = requestData?.email ?? string.Empty,
-                Password = requestData?.password ?? string.Empty
+                Email = loginRequest.Email ?? string.Empty,
+                Password = loginRequest.Password
             }),
             LoginType.Username => await _userService.LoginByUsernameAsync(new LoginByUsernameRequest
             {
-                Username = requestData?.username ?? string.Empty,
-                Password = requestData?.password ?? string.Empty
+                Username = loginRequest.Username ?? string.Empty,
+                Password = loginRequest.Password
             }),
             _ => (false, null)
         };

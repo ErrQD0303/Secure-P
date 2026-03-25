@@ -101,10 +101,10 @@ public static class AppConstants
         {
             public const string DefaultRoute = "Identity";
             public const string Register = "user/register";
-            public const string Login = "user/login";
+            public const string Login = "user/login/{login-type}";
             public const string OTPLogin = "user/otp-login";
             public const string Logout = "user/logout";
-            public const string GetUserInfo = "user/getInfo";
+            public const string GetUserInfo = "user/get-user-info";
             public const string ConfirmEmail = "user/confirm-email";
             public const string ResendEmailConfirmation = "user/resend-email-confirmation";
             public const string UpdateProfile = "user/update-profile";
@@ -113,8 +113,8 @@ public static class AppConstants
             public const string ResetPassword = "user/reset-password";
             public class AdminUser
             {
-                public const string GetUser = "get-user/{id}";
-                public const string GetAllUser = "get-users";
+                public const string GetUser = "users/{id}";
+                public const string GetAllUser = "users";
             }
         }
 

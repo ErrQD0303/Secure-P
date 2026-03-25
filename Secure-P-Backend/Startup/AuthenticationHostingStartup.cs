@@ -1,3 +1,5 @@
+using SecureP.Authentication;
+
 [assembly: HostingStartup(typeof(Secure_P_Backend.Startup.AuthenticationHostingStartup))]
 namespace Secure_P_Backend.Startup;
 
@@ -14,6 +16,7 @@ public class AuthenticationHostingStartup : IHostingStartup
     {
         builder.ConfigureServices((context, services) =>
         {
+            services.AddAppAuthentication(context.Configuration);
         });
     }
 }

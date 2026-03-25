@@ -4,25 +4,30 @@ using SecureP.Data.Seed;
 var builder = WebApplication.CreateBuilder(args);
 
 // Services are registered in the ConfigureServices method inside Startup foldersservices.Configure<JwtConfigures>(context.Configuration.GetSection(AppConstants.JwtConfiguresSection)); // Configure JWT settings
+
+/* 
 builder.Services.Configure<JwtConfigures>(builder.Configuration.GetSection(AppConstants.JwtConfiguresSection)); // Configure JWT settings
 var jwtConfigures = builder.Configuration.GetSection(AppConstants.JwtConfiguresSection).Get<JwtConfigures>();
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
             ValidIssuer = jwtConfigures?.Authority ?? throw new InvalidOperationException("Authority is missing"),
+
+            ValidateAudience = true,
             ValidAudience = jwtConfigures?.Audience ?? throw new InvalidOperationException("Audience is missing"),
-            ValidAlgorithms = [SecurityAlgorithms.HmacSha256, SecurityAlgorithms.RsaSha256],
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+
+            ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfigures?.Key ?? throw new InvalidOperationException("Key is missing"))),
-            ClockSkew = TimeSpan.Zero
+
+            ValidAlgorithms = [SecurityAlgorithms.HmacSha256],
         };
-    });
+    }); */
 
 // Exception handlers registration
 builder.Services.AddExceptionHandler<UserRegisterExceptionHandler>();
@@ -56,7 +61,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+app.UseStaticFiles(); // Serve static files from wwwroot folder
 app.UseCookiePolicy();
 
 app.UseExceptionHandler(); // Add global exception handling middleware

@@ -1,8 +1,14 @@
+using System.Text.Json.Serialization;
+
 namespace SecureP.Shared;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LoginType
 {
-    Email = 0,
+    [JsonStringEnumMemberName("email")]
+    Email,
+    [JsonStringEnumMemberName("username")]
     Username,
-    PhoneNumber
+    [JsonStringEnumMemberName("phone")]
+    Phone
 }

@@ -6,6 +6,6 @@ public class ForgotPasswordRequest
 {
     [JsonPropertyName("email")]
     public required string Email { get; set; }
-    [JsonPropertyName("redirectUrl")]
+    [JsonPropertyName("redirect_url")]
     public required string RedirectUrl { get; set; }
 }
