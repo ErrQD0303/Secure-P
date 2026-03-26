@@ -116,7 +116,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         }
 
         _logger.LogInformation("User created successfully with email: {email}. Sending confirmation email.", registerRequest.Email);
-        _ = SendConfirmationEmailAsync(newUser);
+        await SendConfirmationEmailAsync(newUser);
         return Result<AppUser<TKey>>.Success(newUser);
     }
 
