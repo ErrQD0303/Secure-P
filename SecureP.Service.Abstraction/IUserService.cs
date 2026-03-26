@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using SecureP.Identity.Models;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Service.Abstraction.Results;
 
 namespace SecureP.Service.Abstraction;
 
@@ -17,7 +18,7 @@ public interface IUserService<TKey> where TKey : IEquatable<TKey>
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    Task<AppUser<TKey>> RegisterAsync(RegisterRequest request);
+    Task<Result<AppUser<TKey>>> RegisterAsync(RegisterRequest request);
     Task<(bool Success, AppUser<TKey>? User)> LoginByEmailAsync(LoginByEmailRequest request);
     Task<(bool Success, AppUser<TKey>? User)> LoginByUsernameAsync(LoginByUsernameRequest request);
     Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request);

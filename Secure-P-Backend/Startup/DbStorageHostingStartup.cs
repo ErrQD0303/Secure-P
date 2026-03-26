@@ -1,5 +1,3 @@
-using SecureP.Service.ParkingZoneService.Extensions;
-
 [assembly: HostingStartup(typeof(Secure_P_Backend.Startup.DbStorageHostingStartup))]
 namespace Secure_P_Backend.Startup;
 
@@ -25,6 +23,7 @@ public class DbStorageHostingStartup : IHostingStartup
             services.AddUserService<string>(); // Add user service
             services.AddParkingLocationService<string>(); // Add parking location service
             services.AddEmailService(context.Configuration);
+            services.AddEmailBackgroundWorker();
             services.AddUploadService<string>();
             services.AddParkingRateService<string>(); // Add parking rate service
             services.AddParkingZoneService<string>(); // Add parking zone service

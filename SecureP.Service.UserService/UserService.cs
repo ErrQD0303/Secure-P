@@ -14,6 +14,7 @@ using SecureP.Identity.Models.Enum;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
+using SecureP.Service.Abstraction.Results;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
 using SecureP.Shared.Helpers;
@@ -27,16 +28,16 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     private readonly UserManager<AppUser<TKey>> _userManager;
     private readonly IPasswordValidator<AppUser<TKey>> _passwordValidator;
     private readonly JwtConfigures _jwtConfigures;
-    private readonly IEmailService _emailService;
+    private readonly IEmailTaskQueue _emailTaskQueue;
     private readonly RoleManager<AppRole<TKey>> _roleManager;
 
-    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailService emailService, RoleManager<AppRole<TKey>> roleManager)
+    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailTaskQueue emailTaskQueue, RoleManager<AppRole<TKey>> roleManager)
     {
         _logger = logger;
         _userManager = userManager;
         _passwordValidator = passwordValidator;
         _jwtConfigures = jwtConfiguresOptions.Value;
-        _emailService = emailService;
+        _emailTaskQueue = emailTaskQueue;
         _roleManager = roleManager;
     }
 
@@ -99,75 +100,24 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         return (isPasswordValid, user);
     }
 
-    public async Task<AppUser<TKey>> RegisterAsync(RegisterRequest registerRequest)
+    public async Task<Result<AppUser<TKey>>> RegisterAsync(RegisterRequest registerRequest)
     {
-        _logger.LogInformation("Registering user with email: {email}", registerRequest.Email);
+        _logger.LogInformation("Starting registration project for user with email: {email}", registerRequest.Email);
 
-        var user = registerRequest.ToRegisterValidatedUserDto<TKey>();
+        var newUser = registerRequest.ToAppUser(_userManager);
 
-        _logger.LogInformation("Validating user registration information for email: {email}", registerRequest.Email);
-        await UserService<TKey>.ValidateUser(user, _userManager, _passwordValidator);
-
-        var newUser = user.ToAppUser(_userManager);
-
-        _logger.LogInformation("Creating user for email: {email}", registerRequest.Email);
-        var result = await _userManager.CreateAsync(newUser, user.Password!);
+        var result = await _userManager.CreateAsync(newUser, registerRequest.Password!);
 
         if (!result.Succeeded)
         {
             _logger.LogWarning("User registration failed for email: {email}. Errors: {errors}", registerRequest.Email, string.Join(", ", result.Errors.Select(e => $"{e.Code}: {e.Description}")));
-            throw new UserRegisterException("User registration failed", result.Errors);
+
+            return Result<AppUser<TKey>>.Failure([.. result.Errors.Select(e => Error.Validation(e.Code, e.Description))]);
         }
 
         _logger.LogInformation("User created successfully with email: {email}. Sending confirmation email.", registerRequest.Email);
         _ = SendConfirmationEmailAsync(newUser);
-        _logger.LogInformation("User registered successfully with email: {email}", registerRequest.Email);
-        return newUser;
-    }
-
-    /// <summary>
-    /// Validates the user registration information
-    /// </summary>
-    /// <param name="user">the current user</param>
-    /// <param name="userManager">User manager class</param>
-    /// <param name="passwordValidator">the password validator object</param>
-    /// <returns></returns>
-    /// <exception cref="UserRegisterException">Represent the User Register Failures</exception>
-    private static async Task ValidateUser(RegisterValidatedUserDto<TKey> user, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator)
-    {
-        // 1. Create empty error list
-        var errors = new List<IdentityError>();
-
-        // 2. Create a holder for validation results
-        List<ValidationResult> validationResults = [];
-        // 3. Create the registration user ValidationContext
-        ValidationContext validationContext = new(user);
-        // 4. Validate the registration user object and output the validation errors to the validationResults list
-        if (!Validator.TryValidateObject(user, validationContext, validationResults, true))
-        {
-            // Add the validation errors to the error list, mapping the ValidationResult to IdentityError
-            errors.AddRange(validationResults.Select(error => new IdentityError
-            {
-                Code = error.MemberNames.FirstOrDefault() ?? string.Empty,
-                Description = error.ErrorMessage ?? string.Empty
-            }));
-        }
-
-        // 5. Validate the password 
-        var tempUser = new AppUser<TKey> { UserName = user.UserName ?? user.Email, Email = user.Email! };
-        var passwordValidationResult = await passwordValidator.ValidateAsync(userManager, tempUser, user.Password);
-
-        if (!passwordValidationResult.Succeeded)
-        {
-            errors.AddRange(passwordValidationResult.Errors);
-        }
-
-
-        // 6. Throw a UserRegisterException if there are any errors in the error list, passing the error list to the exception
-        if (errors.Count != 0)
-        {
-            throw new UserRegisterException("User validation failed", errors);
-        }
+        return Result<AppUser<TKey>>.Success(newUser);
     }
 
     public Task<AppUser<TKey>?> GetUserByEmailAsync(string email)
@@ -219,7 +169,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
         // Send email
         _logger.LogInformation("Sending confirmation email to user with email: {email}", user.Email);
-        await _emailService.SendConfirmationEmailAsync(user.Email, url);
+        await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(user.Email, url, AppConstants.SupportEmailType.ConfirmEmail));
     }
 
     public async Task ResendConfirmationEmailAsync(string email)
@@ -342,7 +292,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
         var url = string.Format("{0}?email={1}&token={2}", forgotPasswordActionUrl, UrlEncoder.Default.Encode(user.Email!), based64Token);
 
-        _ = _emailService.SendForgotPasswordEmailAsync(user.Email!, url);
+        await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(user.Email!, url, AppConstants.SupportEmailType.ForgotPassword));
 
         return IdentityResult.Success;
     }

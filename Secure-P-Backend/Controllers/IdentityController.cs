@@ -1,6 +1,7 @@
 using SecureP.Identity.Models.Enum;
 using SecureP.Identity.Models;
-using SecureP.Identity.Models.Dto; // Ensure this namespace is imported
+using SecureP.Identity.Models.Dto;
+using System.ComponentModel.DataAnnotations; // Ensure this namespace is imported
 
 namespace Secure_P_Backend.Controllers;
 
@@ -15,15 +16,15 @@ public class IdentityController : ControllerBase
     private readonly IUserService<string> _userService;
     private readonly ITokenService<string> _tokenService;
     private readonly JwtConfigures _jwtConfigures;
-    private readonly IEmailService _emailService;
+    private readonly IEmailTaskQueue _emailTaskQueue;
 
-    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService<string> tokenService, IOptions<JwtConfigures> jwtConfigures, IEmailService emailService)
+    public IdentityController(ILogger<IdentityController> logger, IUserService<string> userService, ITokenService<string> tokenService, IOptions<JwtConfigures> jwtConfigures, IEmailTaskQueue emailTaskQueue)
     {
         _logger = logger;
         _userService = userService;
         _tokenService = tokenService;
         _jwtConfigures = jwtConfigures.Value;
-        _emailService = emailService;
+        _emailTaskQueue = emailTaskQueue;
     }
 
     /// <summary>
@@ -36,19 +37,53 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
         _logger.LogInformation($"Registering user with email: {registerRequest.Email}");
+
+        // Validate the incoming request
+        ValidationContext context = new(registerRequest);
+        List<ValidationResult> validationResults = [];
+        bool isValid = Validator.TryValidateObject(registerRequest, context, validationResults, true);
+
+        if (!isValid)
+        {
+            var errors = validationResults.ToDictionary(vr => vr.MemberNames.FirstOrDefault()!, vr => (object)vr.ErrorMessage!);
+
+            return CreateUserRegisterFailedResponse(errors);
+        }
+
         // Register user
-        AppUser<string>? user = null;
-        user = await _userService.RegisterAsync(registerRequest);
+        var userResult = await _userService.RegisterAsync(registerRequest);
+        if (!userResult.IsSuccess)
+        {
+            var errors = userResult.Errors.ToDictionary(e => e.Code, e => (object)e.Description);
+
+            return CreateUserRegisterFailedResponse(errors);
+        }
 
         var userDto = new UserRegisterResponse<string>
         {
             StatusCode = StatusCodes.Status201Created,
             Success = "true",
             Message = AppResponses.UserRegisterResponses.UserRegistered,
-            User = user.ToUserRegisterResponseAppUser()
+            User = userResult.Value!.ToUserRegisterResponseAppUser()
         };
 
-        return CreatedAtAction(nameof(GetUserInfo), new { id = user.Id }, userDto);
+        return CreatedAtAction(nameof(GetUserInfo), new { id = userResult.Value!.Id }, userDto);
+    }
+
+    [NonAction]
+    private BadRequestObjectResult CreateUserRegisterFailedResponse(Dictionary<string, object> additionalErrors)
+    {
+        var errors = AppResponseErrors.UserRegisterErrors.UserRegistrationFailed
+            .Concat(additionalErrors)
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        return BadRequest(new UserRegisterResponse<string>
+        {
+            StatusCode = StatusCodes.Status400BadRequest,
+            Success = "false",
+            Message = AppResponses.UserRegisterResponses.UserRegistrationFailed,
+            Errors = errors
+        });
     }
 
     [HttpPost(AppConstants.AppController.IdentityController.Logout)]
@@ -205,7 +240,7 @@ public class IdentityController : ControllerBase
 
             var otp = await _tokenService.GenerateOTPAsync(user.Email);
 
-            _ = _emailService.SendOTPEmailAsync(user.Email, otp);
+            await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(user.Email, otp, AppConstants.SupportEmailType.OTP));
         }
 
         return Ok(new LoginResponse<string>
@@ -307,7 +342,12 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> ConfirmEmail(ConfirmEmailRequest request)
     {
         _logger.LogInformation($"Confirming email for user with email: {request.Email}");
-        if (await _userService.ConfirmEmailAsync(request))
+
+        ValidationContext context = new(request);
+        List<ValidationResult> validationResults = [];
+        bool isValid = Validator.TryValidateObject(request, context, validationResults, true);
+
+        if (isValid && await _userService.ConfirmEmailAsync(request))
         {
             return Ok(new ConfirmEmailResponse<string>
             {
@@ -317,12 +357,18 @@ public class IdentityController : ControllerBase
             });
         }
 
+        var errors = !isValid
+            ? AppResponseErrors.EmailConfirmationErrors.EmailConfirmationFailed
+                .Concat(validationResults.ToDictionary(vr => vr.MemberNames.FirstOrDefault()!, v => v.ErrorMessage!))
+                .ToDictionary(x => x.Key, x => x.Value)
+            : AppResponseErrors.EmailConfirmationErrors.EmailConfirmationFailed;
+
         return BadRequest(new ConfirmEmailResponse<string>
         {
             StatusCode = StatusCodes.Status400BadRequest,
             Success = "false",
             Message = AppResponses.EmailConfirmationResponses.EmailConfirmationFailed,
-            Errors = AppResponseErrors.EmailConfirmationErrors.EmailConfirmationFailed
+            Errors = errors
         });
     }
 

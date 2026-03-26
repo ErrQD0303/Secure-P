@@ -30,7 +30,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     }); */
 
 // Exception handlers registration
-builder.Services.AddExceptionHandler<UserRegisterExceptionHandler>();
+// builder.Services.AddExceptionHandler<UserRegisterExceptionHandler>();
 
 builder.Services.AddProblemDetails();
 

@@ -32,3 +32,5 @@ global using SecureP.Service.Abstraction.Exceptions;
 global using SecureP.Service.ParkingRateService.Extensions;
 global using SecureP.Cache.RedisCacheManager.Extensions;
 global using SecureP.Helpers.ExceptionHandlers;
+global using SecureP.Service.ParkingZoneService.Extensions;
+global using SecureP.EmailQueue.Extensions;

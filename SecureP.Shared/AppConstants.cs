@@ -49,8 +49,8 @@ public static class AppConstants
     {
         public const string Default = "Normal";
         public const string OTP = "OTP";
-        public const string ConfirmEmail = "ConfirmEmail";
-        public const string ForgotPassword = "ForgotPassword";
+        public const string ConfirmEmail = "Confirm Email";
+        public const string ForgotPassword = "Forgot Password";
     }
 
     public class AppEmail
@@ -101,7 +101,7 @@ public static class AppConstants
         {
             public const string DefaultRoute = "Identity";
             public const string Register = "user/register";
-            public const string Login = "user/login/{login-type}";
+            public const string Login = "user/login/{login-ertype}";
             public const string OTPLogin = "user/otp-login";
             public const string Logout = "user/logout";
             public const string GetUserInfo = "user/get-user-info";

@@ -8,20 +8,13 @@ using SecureP.Shared.Configures;
 
 namespace SecureP.EmailSender;
 
-public class EmailSender : IEmailSender
+public class EmailSender(ILogger<EmailSender> logger, SmtpClient smtpClient, IOptions<AuthMessageSenderOptions> options) : IEmailSender
 {
-    protected readonly ILogger<EmailSender> _logger;
-    protected readonly SmtpClient _smtpClient;
+    protected readonly ILogger<EmailSender> _logger = logger;
+    protected readonly SmtpClient _smtpClient = smtpClient;
     public virtual string EmailType { get; internal set; } = AppConstants.SupportEmailType.Default;
 
-    public EmailSender(ILogger<EmailSender> logger, SmtpClient smtpClient, IOptions<AuthMessageSenderOptions> options)
-    {
-        _logger = logger;
-        _smtpClient = smtpClient;
-        Options = options.Value;
-    }
-
-    public AuthMessageSenderOptions Options { get; }
+    public AuthMessageSenderOptions Options { get; } = options.Value;
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
