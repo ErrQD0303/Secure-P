@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Secure-P-Backend\Secure-P-Backend.csproj" />
+    <ProjectReference Include="..\..\SecureP.Shared\SecureP.Shared.csproj" />
   </ItemGroup>
 
 </Project>

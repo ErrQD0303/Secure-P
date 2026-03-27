@@ -24,10 +24,6 @@ public class TestApplicationFactory : WebApplicationFactory<ProgramMarker>
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // var configuration = config.Build();
-            // var connectionString = configuration.GetConnectionString("SqlServer");
-            // Console.WriteLine($"Connection String: {connectionString}");
-            // System.Console.WriteLine($"Environment: {context.HostingEnvironment.EnvironmentName}");
         });
     }
 }

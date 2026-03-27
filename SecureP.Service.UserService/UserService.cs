@@ -165,7 +165,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         _logger.LogInformation("Constructing email confirmation URL for user with email: {email}", user.Email);
         var confirmEmailActionUrl = Path.Combine(_jwtConfigures.Authority!, AppConstants.DefaultRoutePrefix, AppConstants.AppController.IdentityController.DefaultRoute, AppConstants.AppController.IdentityController.ConfirmEmail)
             .Replace("\\", "/");
-        var url = string.Format("{0}?email={1}&token={2}", confirmEmailActionUrl, UrlEncoder.Default.Encode(user.Email!), based64Token);
+        var url = string.Format("{0}?email={1}&token={2}", confirmEmailActionUrl, Uri.EscapeDataString(user.Email), Uri.EscapeDataString(based64Token));
 
         // Send email
         _logger.LogInformation("Sending confirmation email to user with email: {email}", user.Email);
