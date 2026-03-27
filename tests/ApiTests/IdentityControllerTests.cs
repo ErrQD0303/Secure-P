@@ -47,10 +47,10 @@ public class IdentityControllerTests : ApiControllerTests
         var response = await GetRegisteredUserResponseAsync(registerRequest);
 
         // Assert
-        await AssertUserResponse(registerRequest, response);
+        await AssertUserResponseIsValid(registerRequest, response);
     }
 
-    private static async Task AssertUserResponse(RegisterRequest registerRequest, HttpResponseMessage response)
+    private static async Task AssertUserResponseIsValid(RegisterRequest registerRequest, HttpResponseMessage response)
     {
         // Assert
         response.EnsureSuccessStatusCode();
@@ -87,7 +87,7 @@ public class IdentityControllerTests : ApiControllerTests
 
         var registerResponse = await GetRegisteredUserResponseAsync(registerRequest);
 
-        await AssertUserResponse(registerRequest, registerResponse);
+        await AssertUserResponseIsValid(registerRequest, registerResponse);
 
         var user = await UserManager.FindByEmailAsync(registerRequest.Email!);
         Assert.NotNull(user);

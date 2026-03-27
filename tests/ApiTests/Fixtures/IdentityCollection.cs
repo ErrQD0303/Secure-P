@@ -1,6 +1,6 @@
 namespace ApiTests.Fixtures;
 
-[CollectionDefinition(nameof(IdentityCollection), DisableParallelization = true)]
+[CollectionDefinition(nameof(IdentityCollection))]
 public class IdentityCollection : ICollectionFixture<IdentityFixture>
 {
 
