@@ -34,3 +34,5 @@ global using SecureP.Cache.RedisCacheManager.Extensions;
 global using SecureP.Helpers.ExceptionHandlers;
 global using SecureP.Service.ParkingZoneService.Extensions;
 global using SecureP.EmailQueue.Extensions;
+global using SecureP.LoginStrategy.Extensions;
+global using SecureP.LoginStrategy.Abstraction;

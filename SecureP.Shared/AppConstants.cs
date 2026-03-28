@@ -20,7 +20,7 @@ public static class AppConstants
     public const string DefaultAdminEmail = "admin@SecureP.com";
     public const string DefaultAdminPassword = "Admin@123";
     public const string DefaultNormalUserEmail = "user@SecureP.com";
-    public const string DefaultNormalUserPassword = "Admin@123";
+    public const string DefaultNormalUserPassword = "User@123";
 
     public class IdentityEntityFrameworkCoreConstants
     {
@@ -101,7 +101,7 @@ public static class AppConstants
         {
             public const string DefaultRoute = "Identity";
             public const string Register = "user/register";
-            public const string Login = "user/login/{login-ertype}";
+            public const string Login = "user/login/{login-type}";
             public const string OTPLogin = "user/otp-login";
             public const string Logout = "user/logout";
             public const string GetUserInfo = "user/get-user-info";

@@ -6,14 +6,9 @@ using SecureP.Shared;
 
 namespace SecureP.Repository.Tokens;
 
-public class TokenRepository<TKey> : ITokenRepository<TKey> where TKey : IEquatable<TKey>
+public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager) : ITokenRepository<TKey> where TKey : IEquatable<TKey>
 {
-    private readonly UserManager<AppUser<TKey>> _userManager;
-
-    public TokenRepository(UserManager<AppUser<TKey>> userManager)
-    {
-        _userManager = userManager;
-    }
+    private readonly UserManager<AppUser<TKey>> _userManager = userManager;
 
     public async Task<bool> AddTokenAsync(string token, TKey userId, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
     {
