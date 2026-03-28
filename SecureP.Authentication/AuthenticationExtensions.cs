@@ -24,7 +24,13 @@ public static class AuthenticationExtensions
         services.Configure<JwtConfigures>(configuration.GetSection(AppConstants.JwtConfiguresSection));
         var jwtConfigures = configuration.GetSection(AppConstants.JwtConfiguresSection).Get<JwtConfigures>();
 
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        services.AddAuthentication(
+            options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }
+        )
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters

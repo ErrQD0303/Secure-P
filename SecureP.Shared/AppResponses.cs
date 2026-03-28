@@ -26,6 +26,7 @@ public class AppResponses
         public static string UserLoggedIn => "Login successful";
         public static string UserLoggedInWaitForOTP => "Login successful, waiting for OTP";
         public static string UserLoginFailed => "User logged in failed, Invalid email or password!";
+        public static string UserEmailNotFound => "Empty email field or user with this email is not found";
     }
     public class EmailConfirmationResponses
     {

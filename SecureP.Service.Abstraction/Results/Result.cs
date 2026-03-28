@@ -1,6 +1,6 @@
 namespace SecureP.Service.Abstraction.Results;
 
-public class Result<T>
+public class Result<T> : IResult
 {
     public bool IsSuccess { get; }
     public T? Value { get; }

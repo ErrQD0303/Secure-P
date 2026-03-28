@@ -19,8 +19,9 @@ public interface IUserService<TKey> where TKey : IEquatable<TKey>
     /// <param name="request"></param>
     /// <returns></returns>
     Task<Result<AppUser<TKey>>> RegisterAsync(RegisterRequest request);
-    Task<(bool Success, AppUser<TKey>? User)> LoginByEmailAsync(LoginByEmailRequest request);
-    Task<(bool Success, AppUser<TKey>? User)> LoginByUsernameAsync(LoginByUsernameRequest request);
+    Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request);
+    Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request);
+    Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request);
     Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request);
     Task ResendConfirmationEmailAsync(string email);
     Task<bool> UpdateUserAsync(AppUser<TKey> user);

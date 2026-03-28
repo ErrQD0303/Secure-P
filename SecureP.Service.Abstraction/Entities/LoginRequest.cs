@@ -20,19 +20,25 @@ public class LoginRequestDto
 
 public class LoginRequest
 {
+    [Required]
+    [DataType(DataType.Password)]
     public string Password { get; set; } = null!;
 }
 
 public class LoginByEmailRequest : LoginRequest
 {
+    [Required]
+    [EmailAddress]
     public string Email { get; set; } = null!;
 }
 
 public class LoginByUsernameRequest : LoginRequest
 {
+    [Required]
     public string Username { get; set; } = null!;
 }
 public class LoginByPhoneNumberRequest : LoginRequest
 {
+    [Required]
     public string Phone { get; set; } = null!;
 }

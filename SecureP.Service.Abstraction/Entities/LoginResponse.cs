@@ -7,8 +7,8 @@ public class LoginResponse<TKey> where TKey : IEquatable<TKey>
     public int StatusCode { get; set; }
     public string Success { get; set; } = default!;
     public string Message { get; set; } = default!;
-    public Dictionary<string, string> Errors { get; set; } = default!;
-    public string Token { get; set; } = default!;
+    public Dictionary<string, object> Errors { get; set; } = default!;
+    public TokenResponse Tokens { get; set; } = default!;
     public LoginResponseAppUser<TKey> User { get; set; } = default!;
 }
 

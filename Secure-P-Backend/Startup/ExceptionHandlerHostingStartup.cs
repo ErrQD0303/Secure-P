@@ -8,10 +8,10 @@ public class ExceptionHandlerHostingStartup : IHostingStartup
         builder.ConfigureServices((context, services) =>
         {
             // Register exception handlers
-            services.AddExceptionHandler<UserRegisterExceptionHandler>();
+            // services.AddExceptionHandler<UserRegisterExceptionHandler>();
 
-            // Register ProblemDetails for standardized error responses
-            services.AddProblemDetails();
+            // // Register ProblemDetails for standardized error responses
+            // services.AddProblemDetails();
         });
     }
 }
