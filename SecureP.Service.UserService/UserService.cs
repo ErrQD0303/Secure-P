@@ -61,43 +61,49 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
             .ToListAsync();
     }
 
-    public async Task<(bool Success, AppUser<TKey>? User)> LoginByEmailAsync(LoginByEmailRequest request)
+    public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request)
     {
-        if (string.IsNullOrEmpty(request.Email)) return (false, null);
-
         var user = await _userManager.FindByEmailAsync(request.Email);
 
-        if (user == null) return (false, null);
+        if (user == null) return Result<AppUser<TKey>?>.Failure([
+            Error.Validation("Email", AppResponseErrors.UserLoginErrors.UserEmailNotFound["email"].ToString()!)
+        ]);
 
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-        return (isPasswordValid, user);
+        return await CheckPasswordThenReturnUserAsync(user, request.Password);
     }
 
-    public async Task<(bool Success, AppUser<TKey>? User)> LoginByUsernameAsync(LoginByUsernameRequest request)
+    public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request)
     {
-        if (string.IsNullOrEmpty(request.Username)) return (false, null);
+        var user = await _userManager.FindByEmailAsync(request.Username);
 
-        var user = await _userManager.FindByNameAsync(request.Username);
+        if (user == null) return Result<AppUser<TKey>?>.Failure([
+            Error.Validation("Username", AppResponseErrors.UserLoginErrors.UserUsernameNotFound["username"].ToString()!)
+        ]);
 
-        if (user == null) return (false, null);
-
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-
-        return (isPasswordValid, user);
+        return await CheckPasswordThenReturnUserAsync(user, request.Password);
     }
 
-
-    public async Task<(bool Success, AppUser<TKey>? User)> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request)
+    private async Task<Result<AppUser<TKey>?>> CheckPasswordThenReturnUserAsync(AppUser<TKey> user, string password)
     {
-        if (string.IsNullOrEmpty(request.Phone)) return (false, null);
+        var isPasswordValid = await _userManager.CheckPasswordAsync(user, password);
 
+        return isPasswordValid ? Result<AppUser<TKey>?>.Success(user) : Result<AppUser<TKey>?>.Failure([
+            Error.Validation("Password", AppResponseErrors.UserLoginErrors.UserPasswordInvalid["password"].ToString()!)
+        ]);
+    }
+
+    public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request)
+    {
         var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
 
-        if (user == null) return (false, null);
+        if (user == null)
+        {
+            return Result<AppUser<TKey>?>.Failure([
+            Error.Validation("Phone", AppResponseErrors.UserLoginErrors.UserPhoneNumberNotFound["phone"].ToString()!)
+        ]);
+        }
 
-        var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-
-        return (isPasswordValid, user);
+        return await CheckPasswordThenReturnUserAsync(user, request.Password);
     }
 
     public async Task<Result<AppUser<TKey>>> RegisterAsync(RegisterRequest registerRequest)

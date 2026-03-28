@@ -12,9 +12,28 @@ public class AppResponseErrors
 
     public class UserLoginErrors
     {
-        public static Dictionary<string, string> UserLoginFailed => new()
+        public static Dictionary<string, object> UserLoginFailed => new()
         {
             { "summary", "User Login failed" }
+        };
+
+        public static Dictionary<string, object> UserEmailNotFound => new()
+        {
+            { "email", "User with this email is not found" }
+        };
+
+        public static Dictionary<string, object> UserUsernameNotFound => new()
+        {
+            { "username", "User with this username is not found" }
+        };
+        public static Dictionary<string, object> UserPhoneNumberNotFound => new()
+        {
+            { "phone", "User with this phone is not found" }
+        };
+
+        public static Dictionary<string, object> UserPasswordInvalid => new()
+        {
+            { "password", "Invalid password" }
         };
     }
 

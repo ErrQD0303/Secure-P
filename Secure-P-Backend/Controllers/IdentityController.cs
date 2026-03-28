@@ -1,4 +1,5 @@
-using System.ComponentModel.DataAnnotations; // Ensure this namespace is imported
+using System.ComponentModel.DataAnnotations;
+using SecureP.Service.Abstraction.Results; // Ensure this namespace is imported
 
 namespace Secure_P_Backend.Controllers;
 
@@ -35,19 +36,7 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.Register)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest registerRequest)
     {
-        _logger.LogInformation($"Registering user with email: {registerRequest.Email}");
-
-        // Validate the incoming request
-        ValidationContext context = new(registerRequest);
-        List<ValidationResult> validationResults = [];
-        bool isValid = Validator.TryValidateObject(registerRequest, context, validationResults, true);
-
-        if (!isValid)
-        {
-            var errors = validationResults.ToDictionary(vr => vr.MemberNames.FirstOrDefault()!, vr => (object)vr.ErrorMessage!);
-
-            return CreateUserRegisterFailedResponse(errors);
-        }
+        _logger.LogInformation("Registering user with email: {email}", registerRequest.Email);
 
         // Register user
         var userResult = await _userService.RegisterAsync(registerRequest);
@@ -196,16 +185,14 @@ public class IdentityController : ControllerBase
     public async Task<IActionResult> Login([FromRoute(Name = "login-type")] LoginType loginType, [FromBody] LoginRequestDto loginRequest)
     {
         // Login user
-        _logger.LogInformation("Logging in user: {emailOrUsername}", loginRequest.Email ?? loginRequest.Username ?? string.Empty);
-
-        var (loginResult, user) = await _loginStrategyFactory
+        var loginResult = await _loginStrategyFactory
                                     .GetStrategy(loginType)
                                     .LoginAsync(loginRequest);
 
-        _logger.LogInformation("User: {user} logged in.", user?.Email ?? user?.UserName ?? user?.PhoneNumber ?? string.Empty);
-
-        if (!loginResult)
+        if (!loginResult.IsSuccess)
         {
+            _logger.LogWarning("Login failed for user: {emailOrUsername}", loginRequest.Email ?? loginRequest.Username ?? string.Empty);
+
             return Unauthorized(new LoginResponse<string>
             {
                 StatusCode = StatusCodes.Status401Unauthorized,
@@ -215,38 +202,33 @@ public class IdentityController : ControllerBase
             });
         }
 
-        if (!string.IsNullOrWhiteSpace(user?.Email))
+        if (string.IsNullOrWhiteSpace(loginResult.Value?.Email))
         {
-            Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email, new CookieOptions
+            // Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email, new CookieOptions
+            // {
+            //     HttpOnly = true, // Turn off JS accessibility
+            //     Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+            //     SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+            //     Expires = DateTime.UtcNow.AddMinutes(AppConstants.OTPConstant.ExpiryMinute),
+            //     Path = "/",
+            //     // Domain = "localhost" // Ensure this matches the domain used when setting the cookie
+            // });
+
+            _logger.LogError("User {emailOrUsername} does not have an email, cannot proceed with OTP generation", loginRequest.Email ?? loginRequest.Username ?? string.Empty);
+            return BadRequest(new LoginResponse<string>
             {
-                HttpOnly = false, // Turn off JS accessibility
-                Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
-                SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
-                Expires = DateTime.UtcNow.AddMinutes(AppConstants.OTPConstant.ExpiryMinute),
-                Path = "/",
-                Domain = "localhost" // Ensure this matches the domain used when setting the cookie
-            });
-
-            var otp = await _tokenService.GenerateOTPAsync(user.Email);
-
-            await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(user.Email, otp, AppConstants.SupportEmailType.OTP));
-        }
-
-        TokenResponse tokens = await SetAccessCookies(loginRequest, user, Response, _tokenService, _jwtConfigures);
-        if (user.Email == "admin@SecureP.com")
-        {
-            return Ok(new LoginResponse<string>
-            {
-                StatusCode = StatusCodes.Status200OK,
-                Success = "true",
-                Message = AppResponses.UserLoginResponses.UserLoggedIn,
-                User = user.ToLoginResponseAppUser(),
-                Tokens = await SetAccessCookies(new
-                {
-                    Email = user.Email
-                }, user, Response, _tokenService, _jwtConfigures)
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UserLoginResponses.UserEmailNotFound,
+                Errors = AppResponseErrors.UserLoginErrors.UserEmailNotFound
             });
         }
+
+        _logger.LogInformation("User {email} logged in successfully, generating OTP for 2FA", loginResult.Value?.Email);
+        var user = loginResult.Value;
+        var otp = await _tokenService.GenerateOTPAsync(user);
+
+        await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(loginResult.Value?.Email!, otp, AppConstants.SupportEmailType.OTP));
 
         return Ok(new LoginResponse<string>
         {
@@ -284,8 +266,8 @@ public class IdentityController : ControllerBase
 
         Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email!, new CookieOptions
         {
-            HttpOnly = false,
-            Secure = true, // Allow cookie to be sent over HTTP // Set to true for production
+            HttpOnly = true, // Turn off JS accessibility
+            Secure = true, // Allow cookie only for HTTPS // Set to true for production
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow,
             Path = "/",

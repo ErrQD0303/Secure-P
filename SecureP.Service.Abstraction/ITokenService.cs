@@ -9,7 +9,7 @@ public interface ITokenService<TKey> where TKey : IEquatable<TKey>
     Task<string> GenerateRefreshTokenAsync(TokenRequest tokenRequest);
     Task<bool> ValidateAccessTokenAsync(string accessToken, string username);  // Validate the actual token
     Task<(bool isValid, AppUser<TKey>? appUser)> ValidateRefreshTokenAsync(RefreshTokenRequest request);
-    Task<string> GenerateOTPAsync(string email);
+    Task<string> GenerateOTPAsync(AppUser<TKey> user);
     Task<bool> ValidateOTPAsync(string email, string otp);
     Task InvalidateRefreshTokenAsync(TKey userId);
     Task InvalidateAccessTokenAsync(TKey userId);

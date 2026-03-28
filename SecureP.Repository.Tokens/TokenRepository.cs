@@ -1,30 +1,25 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SecureP.Data;
 using SecureP.Identity.Models;
 using SecureP.Repository.Abstraction;
 using SecureP.Shared;
 
 namespace SecureP.Repository.Tokens;
 
-public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager) : ITokenRepository<TKey> where TKey : IEquatable<TKey>
+public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDbContext<TKey> dbContext) : ITokenRepository<TKey> where TKey : IEquatable<TKey>
 {
     private readonly UserManager<AppUser<TKey>> _userManager = userManager;
+    private readonly AppDbContext<TKey> _context = dbContext;
 
-    public async Task<bool> AddTokenAsync(string token, TKey userId, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
+    public async Task<bool> AddTokenAsync(string token, AppUser<TKey> user, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
     {
-        var user = await _userManager.Users
-            .Where(u => u.Id.Equals(userId))
-            .Include(u => u.UserTokens)
-            .FirstOrDefaultAsync();
+        var tokenName = tokenType.ToString();
 
-        if (user is null)
-        {
-            return false;
-        }
-
-        user.UserTokens ??= [];
-
-        var existingToken = GetToken(user, tokenType, loginProvider);
+        var existingToken = await _context.UserTokens
+            .FirstOrDefaultAsync(t => t.UserId.Equals(user.Id)
+                && t.LoginProvider == loginProvider
+                && t.Name == tokenName);
 
         if (existingToken != null)
         {
@@ -37,16 +32,17 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager) : ITo
             {
                 UserId = user.Id,
                 LoginProvider = loginProvider,
-                Name = tokenType.ToString(),
+                Name = tokenName,
                 Value = token,
                 ExpiryDate = expiryDate
             };
 
-            user.UserTokens.Add(userToken);
+            _context.UserTokens.Add(userToken);
         }
 
-        var result = await _userManager.UpdateAsync(user);
-        return result.Succeeded;
+        var rowsAffected = await _context.SaveChangesAsync();
+
+        return rowsAffected > 0;
     }
 
     public async Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)

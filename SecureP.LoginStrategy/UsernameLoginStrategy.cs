@@ -2,6 +2,7 @@ using SecureP.Identity.Models;
 using SecureP.LoginStrategy.Abstraction;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Service.Abstraction.Results;
 using SecureP.Shared;
 
 namespace SecureP.LoginStrategy;
@@ -12,7 +13,7 @@ public class UsernameLoginStrategy<TKey>(IUserService<TKey> userService) : ILogi
 
     public LoginType AppliesTo => LoginType.Username;
 
-    public async Task<(bool Success, AppUser<TKey>? User)> LoginAsync(LoginRequestDto request)
+    public async Task<Result<AppUser<TKey>?>> LoginAsync(LoginRequestDto request)
     {
         return await _userService.LoginByUsernameAsync(new LoginByUsernameRequest
         {

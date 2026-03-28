@@ -128,7 +128,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
             _ => throw new TokenServiceException("Invalid Token Type")
         };
 
-        await _tokenRepository.AddTokenAsync(refreshToken, user!.Id, tokenType, expiryDate, userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        await _tokenRepository.AddTokenAsync(refreshToken, user, tokenType, expiryDate, userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
     }
 
     public async Task<bool> ValidateAccessTokenAsync(string accessToken, string username)
@@ -165,20 +165,11 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()]);
     }
 
-    public async Task<string> GenerateOTPAsync(string email)
+    public async Task<string> GenerateOTPAsync(AppUser<TKey> user)
     {
-        _logger.LogInformation("Generating OTP");
-
-        var user = await _userManager.FindByEmailAsync(email);
-
-        if (user is null)
-        {
-            throw new TokenServiceException($"User with email {email} not found");
-        }
-
         var otp = new Random().Next(100000, 999999).ToString();
 
-        await _tokenRepository.AddTokenAsync(otp, user.Id, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute), AppConstants.DefaultLoginProvider);
+        await _tokenRepository.AddTokenAsync(otp, user, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute), AppConstants.DefaultLoginProvider);
 
         return otp;
     }

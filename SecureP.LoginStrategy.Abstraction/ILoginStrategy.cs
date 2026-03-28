@@ -1,5 +1,6 @@
 ﻿using SecureP.Identity.Models;
 using SecureP.Service.Abstraction.Entities;
+using SecureP.Service.Abstraction.Results;
 using SecureP.Shared;
 
 namespace SecureP.LoginStrategy.Abstraction;
@@ -14,5 +15,5 @@ public interface ILoginStrategy<TKey> where TKey : IEquatable<TKey>
     /// <summary>
     /// The Login Logic for the specific LoginType.
     /// </summary>
-    Task<(bool Success, AppUser<TKey>? User)> LoginAsync(LoginRequestDto request);
+    Task<Result<AppUser<TKey>?>> LoginAsync(LoginRequestDto request);
 }
