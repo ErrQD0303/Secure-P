@@ -12,7 +12,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
     private readonly UserManager<AppUser<TKey>> _userManager = userManager;
     private readonly AppDbContext<TKey> _context = dbContext;
 
-    public async Task<bool> AddTokenAsync(string token, AppUser<TKey> user, TokenType tokenType, DateTime expiryDate)
+    public async Task AddTokenAsync(string token, AppUser<TKey> user, TokenType tokenType, DateTime expiryDate)
     {
         var existingToken = user.UserTokens.FirstOrDefault(t => t.Name == tokenType.ToString() && t.UserId.Equals(user.Id));
 
@@ -36,10 +36,6 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
             _context.UserTokens.Add(userToken);
         }
-
-        var rowsAffected = await _context.SaveChangesAsync();
-
-        return rowsAffected > 0;
     }
 
     public async Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
@@ -91,16 +87,9 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
         return true;
     }
 
-    private static async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken, UserManager<AppUser<TKey>> userManager)
-    {
-        user.UserTokens.Remove(existingToken);
-        await userManager.UpdateAsync(user);
-    }
-
     public async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken)
     {
         user.UserTokens.Remove(existingToken);
-        await _context.SaveChangesAsync();
     }
 
     private static AppUserToken<TKey>? GetToken(AppUser<TKey> user, TokenType tokenType, string loginProvider)
@@ -116,7 +105,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
         return await _userManager.Users.Where(u => u.UserTokens.Any(t => t.Name == tokenType.ToString() && t.Value == token)).FirstOrDefaultAsync();
     }
 
-    public async Task<bool> RemoveTokenAsync(TKey userId, TokenType tokenType)
+    public async Task RemoveTokenAsync(TKey userId, TokenType tokenType)
     {
         var user = _userManager.Users
             .Where(u => u.Id.Equals(userId))
@@ -125,7 +114,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
         if (user is null)
         {
-            return false;
+            return;
         }
 
         user.UserTokens ??= [];
@@ -134,10 +123,14 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
         if (existingToken is null)
         {
-            return false;
+            return;
         }
 
         await RemoveUserTokenAsync(user, existingToken);
-        return true;
+    }
+
+    public async Task<bool> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync() > 0;
     }
 }

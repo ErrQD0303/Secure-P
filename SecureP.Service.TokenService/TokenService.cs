@@ -238,6 +238,8 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
         await _tokenRepository.AddTokenAsync(otp, user, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute));
 
+        await _tokenRepository.SaveChangesAsync();
+
         return otp;
     }
 
@@ -252,6 +254,8 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         }
 
         var isValid = await ValidateTokenAsync(otp, user, TokenType.OTP);
+
+        await _tokenRepository.SaveChangesAsync();
 
         return isValid ? Result<AppUser<TKey>>.Success(user) : Result<AppUser<TKey>>.Failure([new Error(AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Key, AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Value.ToString()!)]);
     }
@@ -281,10 +285,27 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
     public async Task InvalidateRefreshTokenAsync(TKey userId)
     {
         await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
+        await _tokenRepository.SaveChangesAsync();
     }
 
-    public Task InvalidateAccessTokenAsync(TKey userId)
+    public async Task InvalidateAccessTokenAsync(TKey userId)
     {
-        return _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
+        await _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
+        await _tokenRepository.SaveChangesAsync();
+    }
+
+    public async Task InvalidateAccessAndRefreshTokensAsync(TKey userId)
+    {
+        await _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
+        await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
+        await _tokenRepository.SaveChangesAsync();
+    }
+
+    public async Task<(string AccessToken, string RefreshToken)> GenerateAccessAndRefreshTokensAsync(AppUser<TKey> user)
+    {
+        var result = (await GenerateAccessTokenAsync(user), await GenerateRefreshTokenAsync(user));
+        await _tokenRepository.SaveChangesAsync();
+
+        return result;
     }
 }

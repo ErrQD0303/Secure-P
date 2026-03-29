@@ -116,8 +116,7 @@ public class IdentityController : ControllerBase
     [NonAction]
     public static async Task RemoveAccessAndRefreshTokensAsync(HttpResponse Response, ITokenService<string> tokenService, string userId)
     {
-        await tokenService.InvalidateAccessTokenAsync(userId);
-        await tokenService.InvalidateRefreshTokenAsync(userId);
+        await tokenService.InvalidateAccessAndRefreshTokensAsync(userId);
 
         Response.Cookies.Append(AppConstants.CookieNames.AccessToken, string.Empty, new CookieOptions
         {
@@ -287,10 +286,11 @@ public class IdentityController : ControllerBase
     [NonAction]
     public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string> user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
+        var accessAndRefreshTokens = await tokenService.GenerateAccessAndRefreshTokensAsync(user);
         var tokenResponse = new TokenResponse
         {
-            AccessToken = await tokenService.GenerateAccessTokenAsync(user),
-            RefreshToken = await tokenService.GenerateRefreshTokenAsync(user),
+            AccessToken = accessAndRefreshTokens.AccessToken,
+            RefreshToken = accessAndRefreshTokens.RefreshToken,
             TokenType = AppConstants.JwtScheme
         };
 

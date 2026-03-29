@@ -70,4 +70,9 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
 
         return users.FirstOrDefaultAsync(predicate);
     }
+
+    public Task<bool> SaveChangesAsync()
+    {
+        return Task.FromResult(_context.SaveChanges() > 0);
+    }
 }
