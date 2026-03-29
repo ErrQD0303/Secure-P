@@ -245,7 +245,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
     public async Task<Result<AppUser<TKey>>> ValidateOTPAsync(string email, string otp)
     {
-        var user = await _userRepository.FindByEmailAsync(email, includeUserLogins: true, includeUserTokens: true, includeUserRoles: true);
+        var user = await _userRepository.FindByEmailAsync(email, includeUserLogins: false, includeUserTokens: true, includeUserRoles: true);
 
         if (user is null)
         {
@@ -254,8 +254,6 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         }
 
         var isValid = await ValidateTokenAsync(otp, user, TokenType.OTP);
-
-        await _tokenRepository.SaveChangesAsync();
 
         return isValid ? Result<AppUser<TKey>>.Success(user) : Result<AppUser<TKey>>.Failure([new Error(AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Key, AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Value.ToString()!)]);
     }
