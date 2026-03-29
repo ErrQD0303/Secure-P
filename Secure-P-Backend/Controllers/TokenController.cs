@@ -53,7 +53,7 @@ public class TokenController : ControllerBase
         {
             AccessToken = await _tokenService.GenerateAccessTokenAsync(tokenRequest),
             RefreshToken = await _tokenService.GenerateRefreshTokenAsync(tokenRequest),
-            TokenType = "Bearer"
+            TokenType = AppConstants.JwtScheme
         };
     }
 }

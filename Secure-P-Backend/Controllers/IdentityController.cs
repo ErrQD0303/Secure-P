@@ -226,7 +226,7 @@ public class IdentityController : ControllerBase
 
         _logger.LogInformation("User {email} logged in successfully, generating OTP for 2FA", loginResult.Value?.Email);
         var user = loginResult.Value;
-        var otp = await _tokenService.GenerateOTPAsync(user);
+        var otp = await _tokenService.GenerateOTPAsync(user!);
 
         await _emailTaskQueue.EnqueueEmailAsync(new SendEmailCommand(loginResult.Value?.Email!, otp, AppConstants.SupportEmailType.OTP));
 
@@ -242,39 +242,37 @@ public class IdentityController : ControllerBase
     [HttpPost(AppConstants.AppController.IdentityController.OTPLogin)]
     public async Task<IActionResult> OTPLogin([FromBody] OTPLoginRequest request)
     {
-        _logger.LogInformation($"Logging in user with email: {request.Email} using OTP");
-        if (!await _tokenService.ValidateOTPAsync(request.Email, request.OTP))
+        _logger.LogInformation("Logging in user with email: {email} using OTP", request.Email);
+        var result = await _tokenService.ValidateOTPAsync(request.Email, request.OTP);
+
+        if (!result.IsSuccess)
         {
+            var reason = result.Errors.FirstOrDefault()?.Description ?? "Unknown error";
+            _logger.LogWarning("OTP login failed for user with email: {email}. Reason: {reason}", request.Email, reason);
+
             return Unauthorized(new LoginResponse<string>
             {
                 StatusCode = StatusCodes.Status401Unauthorized,
                 Success = "false",
-                Message = AppResponses.UserLoginResponses.UserLoginFailed,
+                Message = reason,
+                Errors = result.Errors.ToDictionary(e => e.Code, e => (object)e.Description)
             });
         }
 
-        var user = await _userService.GetUserByEmailAsync(request.Email);
-        if (user == null)
-        {
-            return NotFound(new LoginResponse<string>
-            {
-                StatusCode = StatusCodes.Status404NotFound,
-                Success = "false",
-                Message = AppResponses.GetUserInfoResponses.UserNotFound,
-            });
-        }
+        var user = result.Value!;
 
-        Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email!, new CookieOptions
-        {
-            HttpOnly = true, // Turn off JS accessibility
-            Secure = true, // Allow cookie only for HTTPS // Set to true for production
-            SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
-            Expires = DateTime.UtcNow,
-            Path = "/",
-            Domain = "localhost" // Ensure this matches the domain used when setting the cookie
-        });
+        // Response.Cookies.Append(AppConstants.OTPConstant.TemporaryCookieName, user.Email!, new CookieOptions
+        // {
+        //     HttpOnly = true, // Turn off JS accessibility
+        //     Secure = true, // Allow cookie only for HTTPS // Set to true for production
+        //     SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
+        //     Expires = DateTime.UtcNow,
+        //     Path = "/",
+        //     Domain = "localhost" // Ensure this matches the domain used when setting the cookie
+        // });
 
         var tokens = await SetAccessCookies(request, user, Response, _tokenService, _jwtConfigures);
+        _logger.LogInformation("User with email: {email} logged in successfully with OTP", request.Email);
 
         return Ok(new LoginResponse<string>
         {
@@ -299,7 +297,7 @@ public class IdentityController : ControllerBase
             {
                 Email = user?.Email ?? string.Empty,
             }),
-            TokenType = "Bearer"
+            TokenType = AppConstants.JwtScheme
         };
 
         Response.Cookies.Append("access_token", tokenResponse.AccessToken, new CookieOptions
