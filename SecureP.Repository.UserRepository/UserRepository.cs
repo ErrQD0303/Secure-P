@@ -10,7 +10,7 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
 {
     private readonly AppDbContext<TKey> _context = context;
 
-    public Task<AppUser<TKey>?> FindByEmailAsync(string email, bool includeUserRoles = true, bool includeUserTokens = true, bool includeUserLogins = true)
+    public Task<AppUser<TKey>?> FindByEmailAsync(string email, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
     {
         if (string.IsNullOrWhiteSpace(email)) return Task.FromResult<AppUser<TKey>?>(null);
 
@@ -18,7 +18,7 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
         return FindSingleUserAsync(u => u.NormalizedEmail != null && u.NormalizedEmail == normalizedEmail, includeUserRoles, includeUserTokens, includeUserLogins);
     }
 
-    public Task<AppUser<TKey>?> FindByUsernameAsync(string username, bool includeUserRoles = true, bool includeUserTokens = true, bool includeUserLogins = true)
+    public Task<AppUser<TKey>?> FindByUsernameAsync(string username, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
     {
         if (string.IsNullOrWhiteSpace(username)) return Task.FromResult<AppUser<TKey>?>(null);
 
@@ -26,7 +26,7 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
         return FindSingleUserAsync(u => u.NormalizedUserName != null && u.NormalizedUserName == normalizedUsername, includeUserRoles, includeUserTokens, includeUserLogins);
     }
 
-    public Task<AppUser<TKey>?> FindByPhoneAsync(string phone, bool includeUserRoles = true, bool includeUserTokens = true, bool includeUserLogins = true)
+    public Task<AppUser<TKey>?> FindByPhoneAsync(string phone, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
     {
         if (string.IsNullOrWhiteSpace(phone)) return Task.FromResult<AppUser<TKey>?>(null);
 
@@ -51,7 +51,7 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
         return user.Include(u => u.UserLogins);
     }
 
-    private Task<AppUser<TKey>?> FindSingleUserAsync(Expression<Func<AppUser<TKey>, bool>> predicate, bool includeUserRoles = true, bool includeUserTokens = true, bool includeUserLogins = true)
+    private Task<AppUser<TKey>?> FindSingleUserAsync(Expression<Func<AppUser<TKey>, bool>> predicate, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
     {
         var users = _context.Users.AsQueryable().AsSplitQuery();
 

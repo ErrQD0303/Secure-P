@@ -1,0 +1,152 @@
+
+info: Secure_P_Backend.Controllers.IdentityController[0]
+      Logging in user with email: quocdat3396@gmail.com using OTP
+Secure_P_Backend.Controllers.IdentityController: Information: Logging in user with email: quocdat3396@gmail.com using OTP
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[AddressLine1], [a].[AddressLine2], [a].[Avatar], [a].[City], [a].[ConcurrencyStamp], [a].[Country], [a].[DayOfBirth], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[PostCode], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [Identity].[AspNetUsers] AS [a]
+      WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ORDER BY [a].[Id]
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[AddressLine1], [a].[AddressLine2], [a].[Avatar], [a].[City], [a].[ConcurrencyStamp], [a].[Country], [a].[DayOfBirth], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[PostCode], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+FROM [Identity].[AspNetUsers] AS [a]
+WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+ORDER BY [a].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [s].[UserId], [s].[RoleId], [s].[Id], [s].[ConcurrencyStamp], [s].[Name], [s].[NormalizedName], [a5].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a5]
+      INNER JOIN (
+          SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id], [a1].[ConcurrencyStamp], [a1].[Name], [a1].[NormalizedName]
+          FROM [Identity].[AspNetUserRoles] AS [a0]
+          INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+      ) AS [s] ON [a5].[Id] = [s].[UserId]
+      ORDER BY [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+SELECT [s].[UserId], [s].[RoleId], [s].[Id], [s].[ConcurrencyStamp], [s].[Name], [s].[NormalizedName], [a5].[Id]
+FROM (
+    SELECT TOP(1) [a].[Id]
+    FROM [Identity].[AspNetUsers] AS [a]
+    WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+) AS [a5]
+INNER JOIN (
+    SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id], [a1].[ConcurrencyStamp], [a1].[Name], [a1].[NormalizedName]
+    FROM [Identity].[AspNetUserRoles] AS [a0]
+    INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+) AS [s] ON [a5].[Id] = [s].[UserId]
+ORDER BY [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [a2].[Id], [a2].[ClaimType], [a2].[ClaimValue], [a2].[RoleId], [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a5]
+      INNER JOIN (
+          SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id]
+          FROM [Identity].[AspNetUserRoles] AS [a0]
+          INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+      ) AS [s] ON [a5].[Id] = [s].[UserId]
+      INNER JOIN [Identity].[AspNetRoleClaims] AS [a2] ON [s].[Id] = [a2].[RoleId]
+      ORDER BY [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+SELECT [a2].[Id], [a2].[ClaimType], [a2].[ClaimValue], [a2].[RoleId], [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+FROM (
+    SELECT TOP(1) [a].[Id]
+    FROM [Identity].[AspNetUsers] AS [a]
+    WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+) AS [a5]
+INNER JOIN (
+    SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id]
+    FROM [Identity].[AspNetUserRoles] AS [a0]
+    INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+) AS [s] ON [a5].[Id] = [s].[UserId]
+INNER JOIN [Identity].[AspNetRoleClaims] AS [a2] ON [s].[Id] = [a2].[RoleId]
+ORDER BY [a5].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [a3].[UserId], [a3].[LoginProvider], [a3].[Name], [a3].[ExpiryDate], [a3].[Value], [a6].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a6]
+      INNER JOIN [Identity].[AspNetUserTokens] AS [a3] ON [a6].[Id] = [a3].[UserId]
+      ORDER BY [a6].[Id]
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+SELECT [a3].[UserId], [a3].[LoginProvider], [a3].[Name], [a3].[ExpiryDate], [a3].[Value], [a6].[Id]
+FROM (
+    SELECT TOP(1) [a].[Id]
+    FROM [Identity].[AspNetUsers] AS [a]
+    WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+) AS [a6]
+INNER JOIN [Identity].[AspNetUserTokens] AS [a3] ON [a6].[Id] = [a3].[UserId]
+ORDER BY [a6].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [a4].[LoginProvider], [a4].[ProviderKey], [a4].[ProviderDisplayName], [a4].[UserId], [a7].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a7]
+      INNER JOIN [Identity].[AspNetUserLogins] AS [a4] ON [a7].[Id] = [a4].[UserId]
+      ORDER BY [a7].[Id]
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+SELECT [a4].[LoginProvider], [a4].[ProviderKey], [a4].[ProviderDisplayName], [a4].[UserId], [a7].[Id]
+FROM (
+    SELECT TOP(1) [a].[Id]
+    FROM [Identity].[AspNetUsers] AS [a]
+    WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+) AS [a7]
+INNER JOIN [Identity].[AspNetUserLogins] AS [a4] ON [a7].[Id] = [a4].[UserId]
+ORDER BY [a7].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (18ms) [Parameters=[@p0='?' (Size = 128), @p1='?' (Size = 128), @p2='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      DELETE FROM [Identity].[AspNetUserTokens]
+      OUTPUT 1
+      WHERE [LoginProvider] = @p0 AND [Name] = @p1 AND [UserId] = @p2;
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (18ms) [Parameters=[@p0='?' (Size = 128), @p1='?' (Size = 128), @p2='?' (Size = 450)], CommandType='Text', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+DELETE FROM [Identity].[AspNetUserTokens]
+OUTPUT 1
+WHERE [LoginProvider] = @p0 AND [Name] = @p1 AND [UserId] = @p2;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (16ms) [Parameters=[@p2='?' (Size = 128), @p3='?' (Size = 128), @p4='?' (Size = 450), @p0='?' (DbType = DateTime2), @p1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p0, [Value] = @p1
+      OUTPUT 1
+      WHERE [LoginProvider] = @p2 AND [Name] = @p3 AND [UserId] = @p4;
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (16ms) [Parameters=[@p2='?' (Size = 128), @p3='?' (Size = 128), @p4='?' (Size = 450), @p0='?' (DbType = DateTime2), @p1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p0, [Value] = @p1
+OUTPUT 1
+WHERE [LoginProvider] = @p2 AND [Name] = @p3 AND [UserId] = @p4;
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (36ms) [Parameters=[@p2='?' (Size = 128), @p3='?' (Size = 128), @p4='?' (Size = 450), @p0='?' (DbType = DateTime2), @p1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p0, [Value] = @p1
+      OUTPUT 1
+      WHERE [LoginProvider] = @p2 AND [Name] = @p3 AND [UserId] = @p4;
+Microsoft.EntityFrameworkCore.Database.Command: Information: Executed DbCommand (36ms) [Parameters=[@p2='?' (Size = 128), @p3='?' (Size = 128), @p4='?' (Size = 450), @p0='?' (DbType = DateTime2), @p1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p0, [Value] = @p1
+OUTPUT 1
+WHERE [LoginProvider] = @p2 AND [Name] = @p3 AND [UserId] = @p4;
+info: Secure_P_Backend.Controllers.IdentityController[0]
+      User with email: quocdat3396@gmail.com logged in successfully with OTP
+Secure_P_Backend.Controllers.IdentityController: Information: User with email: quocdat3396@gmail.com logged in successfully with OTP
+The program '[19100] Secure-P-Backend.exe' has exited with code -1 (0xffffffff).

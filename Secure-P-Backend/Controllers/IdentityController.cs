@@ -285,18 +285,12 @@ public class IdentityController : ControllerBase
     }
 
     [NonAction]
-    public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string>? user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
+    public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string> user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
         var tokenResponse = new TokenResponse
         {
-            AccessToken = await tokenService.GenerateAccessTokenAsync(new TokenRequest
-            {
-                Email = user?.Email ?? string.Empty,
-            }),
-            RefreshToken = await tokenService.GenerateRefreshTokenAsync(new TokenRequest
-            {
-                Email = user?.Email ?? string.Empty,
-            }),
+            AccessToken = await tokenService.GenerateAccessTokenAsync(user),
+            RefreshToken = await tokenService.GenerateRefreshTokenAsync(user),
             TokenType = AppConstants.JwtScheme
         };
 

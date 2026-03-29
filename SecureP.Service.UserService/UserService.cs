@@ -66,7 +66,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request)
     {
-        var user = await _userRepository.FindByEmailAsync(request.Email);
+        var user = await _userRepository.FindByEmailAsync(request.Email, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Email", AppResponseErrors.UserLoginErrors.UserEmailNotFound["email"].ToString()!)
@@ -77,7 +77,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Username);
+        var user = await _userRepository.FindByUsernameAsync(request.Username, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Username", AppResponseErrors.UserLoginErrors.UserUsernameNotFound["username"].ToString()!)
@@ -97,7 +97,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
+        var user = await _userRepository.FindByPhoneAsync(request.Phone, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null)
         {

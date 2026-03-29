@@ -28,7 +28,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
             var userToken = new AppUserToken<TKey>
             {
                 UserId = user.Id,
-                LoginProvider = user.UserLogins.FirstOrDefault()?.LoginProvider ?? AppConstants.DefaultLoginProvider,
+                LoginProvider = user.UserLogins?.FirstOrDefault()?.LoginProvider ?? AppConstants.DefaultLoginProvider,
                 Name = tokenName,
                 Value = token,
                 ExpiryDate = expiryDate
@@ -83,11 +83,11 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
         if (existingToken.ExpiryDate < DateTime.UtcNow)
         {
-            await RemoveUserTokenAsync(user, existingToken, _userManager);
+            await RemoveUserTokenAsync(user, existingToken);
             return false;
         }
 
-        await RemoveUserTokenAsync(user, existingToken, _userManager);
+        await RemoveUserTokenAsync(user, existingToken);
         return true;
     }
 
@@ -100,7 +100,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
     public async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken)
     {
         user.UserTokens.Remove(existingToken);
-        await _userManager.UpdateAsync(user);
+        await _context.SaveChangesAsync();
     }
 
     private static AppUserToken<TKey>? GetToken(AppUser<TKey> user, TokenType tokenType, string loginProvider)
@@ -137,7 +137,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
             return false;
         }
 
-        await RemoveUserTokenAsync(user, existingToken, _userManager);
+        await RemoveUserTokenAsync(user, existingToken);
         return true;
     }
 }

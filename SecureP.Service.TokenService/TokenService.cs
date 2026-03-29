@@ -243,7 +243,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
     public async Task<Result<AppUser<TKey>>> ValidateOTPAsync(string email, string otp)
     {
-        var user = await _userRepository.FindByEmailAsync(email);
+        var user = await _userRepository.FindByEmailAsync(email, includeUserLogins: true, includeUserTokens: true, includeUserRoles: true);
 
         if (user is null)
         {
