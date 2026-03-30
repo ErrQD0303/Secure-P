@@ -1,0 +1,57 @@
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[AddressLine1], [a].[AddressLine2], [a].[Avatar], [a].[City], [a].[ConcurrencyStamp], [a].[Country], [a].[DayOfBirth], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[PostCode], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [Identity].[AspNetUsers] AS [a]
+      WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ORDER BY [a].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [s].[UserId], [s].[RoleId], [s].[Id], [s].[ConcurrencyStamp], [s].[Name], [s].[NormalizedName], [a4].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a4]
+      INNER JOIN (
+          SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id], [a1].[ConcurrencyStamp], [a1].[Name], [a1].[NormalizedName]
+          FROM [Identity].[AspNetUserRoles] AS [a0]
+          INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+      ) AS [s] ON [a4].[Id] = [s].[UserId]
+      ORDER BY [a4].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [a2].[Id], [a2].[ClaimType], [a2].[ClaimValue], [a2].[RoleId], [a4].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a4]
+      INNER JOIN (
+          SELECT [a0].[UserId], [a0].[RoleId], [a1].[Id]
+          FROM [Identity].[AspNetUserRoles] AS [a0]
+          INNER JOIN [Identity].[AspNetRoles] AS [a1] ON [a0].[RoleId] = [a1].[Id]
+      ) AS [s] ON [a4].[Id] = [s].[UserId]
+      INNER JOIN [Identity].[AspNetRoleClaims] AS [a2] ON [s].[Id] = [a2].[RoleId]
+      ORDER BY [a4].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT [a3].[UserId], [a3].[LoginProvider], [a3].[Name], [a3].[ExpiryDate], [a3].[Value], [a5].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE [a].[NormalizedEmail] IS NOT NULL AND [a].[NormalizedEmail] = @__normalizedEmail_0
+      ) AS [a5]
+      INNER JOIN [Identity].[AspNetUserTokens] AS [a3] ON [a5].[Id] = [a3].[UserId]
+      ORDER BY [a5].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@p0='?' (Size = 128), @p1='?' (Size = 128), @p2='?' (Size = 450), @p5='?' (Size = 128), @p6='?' (Size = 128), @p7='?' (Size = 450), @p3='?' (DbType = DateTime2), @p4='?' (Size = 4000), @p10='?' (Size = 128), @p11='?' (Size = 128), @p12='?' (Size = 450), @p8='?' (DbType = DateTime2), @p9='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SET NOCOUNT ON;
+      DELETE FROM [Identity].[AspNetUserTokens]
+      OUTPUT 1
+      WHERE [LoginProvider] = @p0 AND [Name] = @p1 AND [UserId] = @p2;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p3, [Value] = @p4
+      OUTPUT 1
+      WHERE [LoginProvider] = @p5 AND [Name] = @p6 AND [UserId] = @p7;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p8, [Value] = @p9
+      OUTPUT 1
+      WHERE [LoginProvider] = @p10 AND [Name] = @p11 AND [UserId] = @p12;

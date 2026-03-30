@@ -9,6 +9,9 @@ public class AppResponses
         public static string UserLogoutFailed => "User failed to logout";
 
         public static string UserNotFound => "User not found";
+        public static string UserClaimsNotFound => "User claims not found";
+        public static string TokenNotFound => "Token not found";
+        public static string TokenInvalid => "Token has been invalidated";
     }
 
     public class UserRegisterResponses

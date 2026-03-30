@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using SecureP.Identity.Models;
 using SecureP.Identity.Models.Dto;
 using SecureP.Identity.Models.Enum;
+using SecureP.Repository.Abstraction;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
@@ -30,8 +31,9 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     private readonly JwtConfigures _jwtConfigures;
     private readonly IEmailTaskQueue _emailTaskQueue;
     private readonly RoleManager<AppRole<TKey>> _roleManager;
+    private readonly IUserRepository<TKey> _userRepository;
 
-    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailTaskQueue emailTaskQueue, RoleManager<AppRole<TKey>> roleManager)
+    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailTaskQueue emailTaskQueue, RoleManager<AppRole<TKey>> roleManager, IUserRepository<TKey> userRepository)
     {
         _logger = logger;
         _userManager = userManager;
@@ -39,16 +41,12 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         _jwtConfigures = jwtConfiguresOptions.Value;
         _emailTaskQueue = emailTaskQueue;
         _roleManager = roleManager;
+        _userRepository = userRepository;
     }
 
-    public async Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
+    public Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
     {
-        _logger.LogInformation($"Getting user with id: {id}");
-
-        return await _userManager.Users
-            .Include(u => u.UserTokens)
-            .Include(u => u.UserLicensePlates)
-            .FirstOrDefaultAsync(u => u.Id.Equals(id));
+        return _userRepository.FindByIdAsync(id, includeUserTokens: true);
     }
 
     public async Task<IEnumerable<AppUser<TKey>>> GetUsersAsync()
@@ -63,7 +61,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Email);
+        var user = await _userRepository.FindByEmailAsync(request.Email, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Email", AppResponseErrors.UserLoginErrors.UserEmailNotFound["email"].ToString()!)
@@ -74,7 +72,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request)
     {
-        var user = await _userManager.FindByEmailAsync(request.Username);
+        var user = await _userRepository.FindByUsernameAsync(request.Username, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Username", AppResponseErrors.UserLoginErrors.UserUsernameNotFound["username"].ToString()!)
@@ -94,7 +92,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request)
     {
-        var user = await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == request.Phone);
+        var user = await _userRepository.FindByPhoneAsync(request.Phone, includeUserTokens: true, includeUserLogins: true);
 
         if (user == null)
         {

@@ -37,6 +37,19 @@ public class AppResponseErrors
         };
     }
 
+    public class OTPLoginErrors
+    {
+        public static Dictionary<string, object> UserEmailNotFound => new()
+        {
+            { "email", "User with this email is not found" }
+        };
+
+        public static Dictionary<string, object> InvalidOTP => new()
+        {
+            { "otp", "Invalid OTP" }
+        };
+    }
+
     public class EmailConfirmationErrors
     {
         public static Dictionary<string, string> EmailConfirmationFailed => new()

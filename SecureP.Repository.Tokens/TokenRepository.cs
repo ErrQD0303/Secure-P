@@ -12,14 +12,9 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
     private readonly UserManager<AppUser<TKey>> _userManager = userManager;
     private readonly AppDbContext<TKey> _context = dbContext;
 
-    public async Task<bool> AddTokenAsync(string token, AppUser<TKey> user, TokenType tokenType, DateTime expiryDate, string loginProvider = AppConstants.DefaultLoginProvider)
+    public async Task AddTokenAsync(string token, AppUser<TKey> user, TokenType tokenType, DateTime expiryDate)
     {
-        var tokenName = tokenType.ToString();
-
-        var existingToken = await _context.UserTokens
-            .FirstOrDefaultAsync(t => t.UserId.Equals(user.Id)
-                && t.LoginProvider == loginProvider
-                && t.Name == tokenName);
+        var existingToken = user.UserTokens.FirstOrDefault(t => t.Name == tokenType.ToString() && t.UserId.Equals(user.Id));
 
         if (existingToken != null)
         {
@@ -28,10 +23,12 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
         }
         else
         {
+            var tokenName = tokenType.ToString();
+
             var userToken = new AppUserToken<TKey>
             {
                 UserId = user.Id,
-                LoginProvider = loginProvider,
+                LoginProvider = user.UserLogins?.FirstOrDefault()?.LoginProvider ?? AppConstants.DefaultLoginProvider,
                 Name = tokenName,
                 Value = token,
                 ExpiryDate = expiryDate
@@ -39,10 +36,6 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
             _context.UserTokens.Add(userToken);
         }
-
-        var rowsAffected = await _context.SaveChangesAsync();
-
-        return rowsAffected > 0;
     }
 
     public async Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
@@ -72,46 +65,36 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
         return result.Succeeded;
     }
 
-    public async Task<bool> ValidateTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider)
+    public async Task<bool> ValidateTokenAsync(string token, AppUser<TKey> user, TokenType tokenType)
     {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return false;
-        }
+        var existingToken = user.UserTokens
+            .FirstOrDefault(t => t.Name == tokenType.ToString()
+                && t.UserId.Equals(user.Id)
+                && t.Value == token);
 
-        var user = await _userManager.Users
-            .Where(u => u.Id.Equals(userId))
-            .Include(u => u.UserTokens)
-            .FirstOrDefaultAsync();
-
-        if (user is null)
-        {
-            return false;
-        }
-
-        user.UserTokens ??= [];
-
-        var existingToken = GetToken(user, tokenType, loginProvider);
-
-        if (existingToken is null || existingToken.Value != token)
+        if (existingToken is null)
         {
             return false;
         }
 
         if (existingToken.ExpiryDate < DateTime.UtcNow)
         {
-            await RemoveUserTokenAsync(user, existingToken, _userManager);
+            await RemoveUserTokenAsync(user, existingToken);
             return false;
         }
 
-        await RemoveUserTokenAsync(user, existingToken, _userManager);
+        // For OTPs, we want to invalidate the token immediately after validation to ensure it's single-use
+        if (tokenType.Equals(TokenType.OTP))
+        {
+            await RemoveUserTokenAsync(user, existingToken);
+        }
+
         return true;
     }
 
-    private static async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken, UserManager<AppUser<TKey>> userManager)
+    public async Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken)
     {
         user.UserTokens.Remove(existingToken);
-        await userManager.UpdateAsync(user);
     }
 
     private static AppUserToken<TKey>? GetToken(AppUser<TKey> user, TokenType tokenType, string loginProvider)
@@ -127,7 +110,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
         return await _userManager.Users.Where(u => u.UserTokens.Any(t => t.Name == tokenType.ToString() && t.Value == token)).FirstOrDefaultAsync();
     }
 
-    public async Task<bool> RemoveTokenAsync(TKey userId, TokenType tokenType)
+    public async Task RemoveTokenAsync(TKey userId, TokenType tokenType)
     {
         var user = _userManager.Users
             .Where(u => u.Id.Equals(userId))
@@ -136,7 +119,7 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
         if (user is null)
         {
-            return false;
+            return;
         }
 
         user.UserTokens ??= [];
@@ -145,10 +128,26 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
 
         if (existingToken is null)
         {
-            return false;
+            return;
         }
 
-        await RemoveUserTokenAsync(user, existingToken, _userManager);
-        return true;
+        await RemoveUserTokenAsync(user, existingToken);
+    }
+
+    public async Task<bool> SaveChangesAsync()
+    {
+        return await _context.SaveChangesAsync() > 0;
+    }
+
+    public Task RemoveTokenAsync(AppUser<TKey> user, TokenType tokenType)
+    {
+        var existingToken = user.UserTokens.FirstOrDefault(t => t.Name == tokenType.ToString() && t.UserId.Equals(user.Id) && t.LoginProvider == (user.UserLogins?.FirstOrDefault()?.LoginProvider ?? AppConstants.DefaultLoginProvider));
+
+        if (existingToken is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return RemoveUserTokenAsync(user, existingToken);
     }
 }

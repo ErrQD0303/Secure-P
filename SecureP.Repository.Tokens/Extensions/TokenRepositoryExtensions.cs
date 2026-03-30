@@ -7,7 +7,6 @@ public static class TokenRepositoryExtensions
 {
     public static IServiceCollection AddTokenRepository<TKey>(this IServiceCollection services) where TKey : IEquatable<TKey>
     {
-        services.AddScoped<ITokenRepository<TKey>, TokenRepository<TKey>>();
-        return services;
+        return services.AddScoped<ITokenRepository<TKey>, TokenRepository<TKey>>();
     }
 }

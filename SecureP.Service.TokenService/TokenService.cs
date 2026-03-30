@@ -13,6 +13,7 @@ using SecureP.Repository.Abstraction;
 using SecureP.Service.Abstraction;
 using SecureP.Service.Abstraction.Entities;
 using SecureP.Service.Abstraction.Exceptions;
+using SecureP.Service.Abstraction.Results;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
 
@@ -21,13 +22,14 @@ namespace SecureP.Service.TokenService;
 public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TKey>
 {
     private readonly ITokenRepository<TKey> _tokenRepository;
+    private readonly IUserRepository<TKey> _userRepository;
     private readonly ILogger<TokenService<TKey>> _logger;
     private readonly UserManager<AppUser<TKey>> _userManager;
     private readonly RoleManager<AppRole<TKey>> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly JwtConfigures _jwtConfigures;
 
-    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration, IOptions<JwtConfigures> jwtConfigures, RoleManager<AppRole<TKey>> roleManager)
+    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration, IOptions<JwtConfigures> jwtConfigures, RoleManager<AppRole<TKey>> roleManager, IUserRepository<TKey> userRepository)
     {
         _tokenRepository = tokenRepository;
         _logger = logger;
@@ -35,12 +37,11 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         _configuration = configuration;
         _jwtConfigures = jwtConfigures.Value;
         _roleManager = roleManager;
+        _userRepository = userRepository;
     }
 
     public async Task<string> GenerateAccessTokenAsync(TokenRequest tokenRequest)
     {
-        _logger.LogInformation("Generating Access Token");
-
         var jwk = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt Key is missing")));
 
         var jsonWebKey = new JsonWebKey
@@ -65,12 +66,14 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
             return string.Empty;
         }
 
+        // Get user roles and their claims
         var userRolesName = await _userManager.GetRolesAsync(user);
         if (userRolesName == null || !userRolesName.Any())
         {
             throw new TokenServiceException($"User {tokenRequest?.Username?.ToString() ?? tokenRequest?.Email ?? string.Empty} has no roles assigned.");
         }
 
+        // Fetch roles with their claims in a single query
         var userRoles = await _roleManager.Roles
             .Where(role => userRolesName.Contains(role.Name ?? string.Empty))
             .Where(role => role.UserRoles.Any(ur => ur.UserId.Equals(user.Id)))
@@ -104,6 +107,49 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         return accessToken;
     }
 
+    public async Task<string> GenerateAccessTokenAsync(AppUser<TKey> user)
+    {
+        var jwk = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt Key is missing")));
+
+        var jsonWebKey = new JsonWebKey
+        {
+            Kty = "oct",
+            K = Base64UrlEncoder.Encode(jwk.Key)
+        };
+
+        // Fetch roles with their claims in a single query
+        var userRoles = user.UserRoles
+            .Select(ur => ur.Role)
+            .Where(r => r != null && r.Name != null)
+            .ToList();
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()!),
+            new(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!)
+        };
+
+        claims.AddRange(userRoles.Select(role => new Claim(AppCustomClaims.Role, role.Name!)));
+
+        foreach (var roleClaim in userRoles.SelectMany(role => role.RoleClaims))
+        {
+            foreach (var claimType in Enum.GetValues<RoleClaimType>().Cast<RoleClaimType>())
+            {
+                if (roleClaim.ClaimValue == RoleClaimType.Administrator || (claimType & roleClaim.ClaimValue) == claimType)
+                {
+                    claims.Add(new Claim(AppCustomClaims.Permission, claimType.ToString()));
+                }
+            }
+        }
+
+        var accessToken = JwtGenerator.GenerateJWTToken(_configuration["Jwt:Authority"] ?? throw new InvalidOperationException("Jwt Authority is missing"), _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt Audience is missing"), null, int.Parse(_configuration["Jwt:ExpirySeconds"] ?? throw new InvalidOperationException("Jwt ExpirySeconds is missing")), claims, jsonWebKey);
+
+        await AddUserTokenAsync(user, accessToken, TokenType.AccessToken);
+
+        return accessToken;
+    }
+
     public async Task<string> GenerateRefreshTokenAsync(TokenRequest tokenRequest)
     {
         _logger.LogInformation("Generating Refresh Token");
@@ -113,6 +159,27 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         await AddUserTokenAsync(tokenRequest, refreshToken, TokenType.RefreshToken);
 
         return refreshToken;
+    }
+
+    public async Task<string> GenerateRefreshTokenAsync(AppUser<TKey> user)
+    {
+        var refreshToken = GenerateRandomString();
+
+        await AddUserTokenAsync(user, refreshToken, TokenType.RefreshToken);
+
+        return refreshToken;
+    }
+
+    private async Task AddUserTokenAsync(AppUser<TKey> user, string token, TokenType tokenType)
+    {
+        var expiryDate = tokenType switch
+        {
+            TokenType.AccessToken => DateTime.UtcNow.AddSeconds(_jwtConfigures.ExpirySeconds),
+            TokenType.RefreshToken => DateTime.UtcNow.AddDays(_jwtConfigures.RefreshExpirySeconds),
+            _ => throw new TokenServiceException("Invalid Token Type")
+        };
+
+        await _tokenRepository.AddTokenAsync(token, user, tokenType, expiryDate);
     }
 
     private async Task AddUserTokenAsync(TokenRequest tokenRequest, string refreshToken, TokenType tokenType)
@@ -128,23 +195,19 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
             _ => throw new TokenServiceException("Invalid Token Type")
         };
 
-        await _tokenRepository.AddTokenAsync(refreshToken, user, tokenType, expiryDate, userLoginProviderInfo != null ? userLoginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        await _tokenRepository.AddTokenAsync(refreshToken, user, tokenType, expiryDate);
     }
 
-    public async Task<bool> ValidateAccessTokenAsync(string accessToken, string username)
+    public async Task<bool> ValidateAccessTokenAsync(string accessToken, TKey id)
     {
-        _logger.LogInformation("Validating Access Token");
-
-        var user = await _userManager.FindByNameAsync(username);
+        var user = await _userRepository.FindByIdAsync(id, includeUserLogins: false, includeUserTokens: true, includeUserRoles: false);
 
         if (user == null)
         {
             return false;
         }
 
-        var loginProviderInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
-
-        return await _tokenRepository.ValidateTokenAsync(accessToken, user.Id, TokenType.AccessToken, loginProviderInfo != null ? loginProviderInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        return await _tokenRepository.ValidateTokenAsync(accessToken, user, TokenType.AccessToken);
     }
 
     public async Task<(bool isValid, AppUser<TKey>? appUser)> ValidateRefreshTokenAsync(RefreshTokenRequest request)
@@ -160,7 +223,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
     private static string GenerateRandomString(int length = 32)
     {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 
         return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()]);
     }
@@ -169,33 +232,75 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
     {
         var otp = new Random().Next(100000, 999999).ToString();
 
-        await _tokenRepository.AddTokenAsync(otp, user, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute), AppConstants.DefaultLoginProvider);
+        await _tokenRepository.AddTokenAsync(otp, user, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute));
+
+        await _tokenRepository.SaveChangesAsync();
 
         return otp;
     }
 
-    public async Task<bool> ValidateOTPAsync(string email, string otp)
+    public async Task<Result<AppUser<TKey>>> ValidateOTPAsync(string email, string otp)
     {
-        _logger.LogInformation("Validating OTP");
-
-        var user = await _userManager.FindByEmailAsync(email);
+        var user = await _userRepository.FindByEmailAsync(email, includeUserLogins: false, includeUserTokens: true, includeUserRoles: true);
 
         if (user is null)
+        {
+            var error = new Error(AppResponseErrors.OTPLoginErrors.UserEmailNotFound.First().Key, AppResponseErrors.OTPLoginErrors.UserEmailNotFound.First().Value.ToString()!);
+            return Result<AppUser<TKey>>.Failure([error]);
+        }
+
+        var isValid = await ValidateTokenAsync(otp, user, TokenType.OTP);
+
+        return isValid ? Result<AppUser<TKey>>.Success(user) : Result<AppUser<TKey>>.Failure([new Error(AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Key, AppResponseErrors.OTPLoginErrors.InvalidOTP.First().Value.ToString()!)]);
+    }
+
+    private async Task<bool> ValidateTokenAsync(string token, AppUser<TKey> user, TokenType tokenType)
+    {
+        var existingToken = user.UserTokens
+            .FirstOrDefault(t => t.Name == tokenType.ToString()
+                && t.UserId.Equals(user.Id)
+                && t.Value == token);
+
+        if (existingToken is null)
         {
             return false;
         }
 
-        var userLoginInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
+        if (existingToken.ExpiryDate < DateTime.UtcNow)
+        {
+            await _tokenRepository.RemoveUserTokenAsync(user, existingToken);
+            return false;
+        }
 
-        return await _tokenRepository.ValidateTokenAsync(otp, user.Id, TokenType.OTP, userLoginInfo != null ? userLoginInfo.LoginProvider : AppConstants.DefaultLoginProvider);
+        await _tokenRepository.RemoveUserTokenAsync(user, existingToken);
+        return true;
     }
+
     public async Task InvalidateRefreshTokenAsync(TKey userId)
     {
         await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
+        await _tokenRepository.SaveChangesAsync();
     }
 
-    public Task InvalidateAccessTokenAsync(TKey userId)
+    public async Task InvalidateAccessTokenAsync(TKey userId)
     {
-        return _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
+        await _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
+        await _tokenRepository.SaveChangesAsync();
     }
+
+    public async Task InvalidateAccessAndRefreshTokensAsync(AppUser<TKey> user)
+    {
+        await _tokenRepository.RemoveTokenAsync(user, TokenType.AccessToken);
+        await _tokenRepository.RemoveTokenAsync(user, TokenType.RefreshToken);
+        await _tokenRepository.SaveChangesAsync();
+    }
+
+    public async Task<(string AccessToken, string RefreshToken)> GenerateAccessAndRefreshTokensAsync(AppUser<TKey> user)
+    {
+        var result = (await GenerateAccessTokenAsync(user), await GenerateRefreshTokenAsync(user));
+        await _tokenRepository.SaveChangesAsync();
+
+        return result;
+    }
+
 }

@@ -17,6 +17,7 @@ public static class AppConstants
     /// The section name in your environment variables or appsettings.json where JWT configuration settings are stored. This constant is used to retrieve JWT settings such as Authority, Audience, Key, ExpirySseconds, and RefreshExpirySeconds for authentication and token generation purposes.
     /// </summary>
     public const string JwtConfiguresSection = "Jwt";
+    public const string JwtScheme = "Bearer";
     public const string DefaultAdminEmail = "admin@SecureP.com";
     public const string DefaultAdminPassword = "Admin@123";
     public const string DefaultNormalUserEmail = "user@SecureP.com";
