@@ -83,7 +83,12 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
             return false;
         }
 
-        await RemoveUserTokenAsync(user, existingToken);
+        // For OTPs, we want to invalidate the token immediately after validation to ensure it's single-use
+        if (tokenType.Equals(TokenType.OTP))
+        {
+            await RemoveUserTokenAsync(user, existingToken);
+        }
+
         return true;
     }
 
@@ -132,5 +137,17 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
     public async Task<bool> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync() > 0;
+    }
+
+    public Task RemoveTokenAsync(AppUser<TKey> user, TokenType tokenType)
+    {
+        var existingToken = user.UserTokens.FirstOrDefault(t => t.Name == tokenType.ToString() && t.UserId.Equals(user.Id) && t.LoginProvider == (user.UserLogins?.FirstOrDefault()?.LoginProvider ?? AppConstants.DefaultLoginProvider));
+
+        if (existingToken is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return RemoveUserTokenAsync(user, existingToken);
     }
 }

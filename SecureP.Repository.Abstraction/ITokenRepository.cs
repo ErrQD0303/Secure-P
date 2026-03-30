@@ -8,6 +8,7 @@ public interface ITokenRepository<TKey> where TKey : IEquatable<TKey>
     Task<bool> ValidateTokenAsync(string token, AppUser<TKey> user, TokenType tokenType);
     Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider);
     Task RemoveTokenAsync(TKey userId, TokenType tokenType);
+    Task RemoveTokenAsync(AppUser<TKey> user, TokenType tokenType);
     Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType);
     Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken);
     Task<bool> SaveChangesAsync();

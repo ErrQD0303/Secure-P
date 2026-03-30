@@ -44,14 +44,9 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         _userRepository = userRepository;
     }
 
-    public async Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
+    public Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
     {
-        _logger.LogInformation($"Getting user with id: {id}");
-
-        return await _userManager.Users
-            .Include(u => u.UserTokens)
-            .Include(u => u.UserLicensePlates)
-            .FirstOrDefaultAsync(u => u.Id.Equals(id));
+        return _userRepository.FindByIdAsync(id, includeUserTokens: true);
     }
 
     public async Task<IEnumerable<AppUser<TKey>>> GetUsersAsync()

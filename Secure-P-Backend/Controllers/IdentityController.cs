@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Azure.Core;
+using SecureP.Repository.Abstraction;
 using SecureP.Service.Abstraction.Results; // Ensure this namespace is imported
 
 namespace Secure_P_Backend.Controllers;
@@ -78,16 +80,17 @@ public class IdentityController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        _logger.LogInformation($"Logging out user with email: {User.FindFirstValue(ClaimTypes.Email)}");
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = User.FindFirstValue(ClaimTypes.Email);
 
-        if (userId == null)
+        if (string.IsNullOrWhiteSpace(userId))
         {
-            return NotFound(new LogoutResponse<string>
+            _logger.LogWarning("Logout failed: User ID claim not found for user with email: {email}", email);
+            return BadRequest(new LogoutResponse<string>
             {
-                StatusCode = StatusCodes.Status404NotFound,
+                StatusCode = StatusCodes.Status400BadRequest,
                 Success = "false",
-                Message = AppResponses.UserLogoutResponses.UserNotFound,
+                Message = AppResponses.UserLogoutResponses.UserClaimsNotFound,
             });
         }
 
@@ -95,6 +98,7 @@ public class IdentityController : ControllerBase
 
         if (user == null)
         {
+            _logger.LogWarning("Logout failed: User not found for user ID: {userId}", userId);
             return NotFound(new LogoutResponse<string>
             {
                 StatusCode = StatusCodes.Status404NotFound,
@@ -103,7 +107,24 @@ public class IdentityController : ControllerBase
             });
         }
 
-        await RemoveAccessAndRefreshTokensAsync(Response, _tokenService, userId);
+        var requestAccessToken = Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        // Don't need to check accessToken because we have done it in the TokenEvents, if the token is valid, the accessToken must be valid, otherwise the request won't reach this point
+        var inDbAccessToken = user.UserTokens.FirstOrDefault(t => t.Name == TokenType.AccessToken.ToString())?.Value;
+        if (string.IsNullOrWhiteSpace(inDbAccessToken) || !requestAccessToken!.Equals(inDbAccessToken))
+        {
+            _logger.LogWarning("Logout failed: Access token mismatch for user with email: {email}", email);
+            return BadRequest(new LogoutResponse<string>
+            {
+                StatusCode = StatusCodes.Status400BadRequest,
+                Success = "false",
+                Message = AppResponses.UserLogoutResponses.TokenInvalid,
+            });
+        }
+
+        // Don't need to check userId because we have done it in the TokenEvents, if the token is valid, the userId must be valid, otherwise the request won't reach this point
+
+        _logger.LogInformation("Logging out user with email: {email} and user ID: {userId}", email, userId);
+        await RemoveAccessAndRefreshTokensAsync(_tokenService, user);
 
         return Ok(new LogoutResponse<string>
         {
@@ -114,9 +135,9 @@ public class IdentityController : ControllerBase
     }
 
     [NonAction]
-    public static async Task RemoveAccessAndRefreshTokensAsync(HttpResponse Response, ITokenService<string> tokenService, string userId)
+    public async Task RemoveAccessAndRefreshTokensAsync(ITokenService<string> tokenService, AppUser<string> user)
     {
-        await tokenService.InvalidateAccessAndRefreshTokensAsync(userId);
+        await tokenService.InvalidateAccessAndRefreshTokensAsync(user);
 
         Response.Cookies.Append(AppConstants.CookieNames.AccessToken, string.Empty, new CookieOptions
         {
@@ -125,7 +146,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow,
             Path = "/",
-            Domain = "localhost"
+            Domain = Request.Host.Host
         });
 
         Response.Cookies.Append(AppConstants.CookieNames.RefreshToken, string.Empty, new CookieOptions
@@ -135,7 +156,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow,
             Path = "/",
-            Domain = "localhost"
+            Domain = Request.Host.Host
         });
     }
 
@@ -284,13 +305,13 @@ public class IdentityController : ControllerBase
     }
 
     [NonAction]
-    public static async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string> user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
+    public async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string> user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
-        var accessAndRefreshTokens = await tokenService.GenerateAccessAndRefreshTokensAsync(user);
+        var (accessToken, refreshToken) = await tokenService.GenerateAccessAndRefreshTokensAsync(user);
         var tokenResponse = new TokenResponse
         {
-            AccessToken = accessAndRefreshTokens.AccessToken,
-            RefreshToken = accessAndRefreshTokens.RefreshToken,
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
             TokenType = AppConstants.JwtScheme
         };
 
@@ -301,7 +322,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.ExpirySeconds),
             Path = "/",
-            Domain = "localhost"
+            Domain = Request.Host.Host
         });
 
         Response.Cookies.Append("refresh_token", tokenResponse.RefreshToken, new CookieOptions
@@ -311,7 +332,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.RefreshExpirySeconds),
             Path = "/",
-            Domain = "localhost"
+            Domain = Request.Host.Host
         });
 
         return tokenResponse;

@@ -10,6 +10,13 @@ public class UserRepository<TKey>(AppDbContext<TKey> context) : IUserRepository<
 {
     private readonly AppDbContext<TKey> _context = context;
 
+    public Task<AppUser<TKey>?> FindByIdAsync(TKey id, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
+    {
+        if (id is null) return Task.FromResult<AppUser<TKey>?>(null);
+
+        return FindSingleUserAsync(u => u.Id != null && u.Id.Equals(id), includeUserRoles, includeUserTokens, includeUserLogins);
+    }
+
     public Task<AppUser<TKey>?> FindByEmailAsync(string email, bool includeUserRoles = false, bool includeUserTokens = false, bool includeUserLogins = false)
     {
         if (string.IsNullOrWhiteSpace(email)) return Task.FromResult<AppUser<TKey>?>(null);

@@ -198,18 +198,14 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         await _tokenRepository.AddTokenAsync(refreshToken, user, tokenType, expiryDate);
     }
 
-    public async Task<bool> ValidateAccessTokenAsync(string accessToken, string username)
+    public async Task<bool> ValidateAccessTokenAsync(string accessToken, TKey id)
     {
-        _logger.LogInformation("Validating Access Token");
-
-        var user = await _userManager.FindByNameAsync(username);
+        var user = await _userRepository.FindByIdAsync(id, includeUserLogins: false, includeUserTokens: true, includeUserRoles: false);
 
         if (user == null)
         {
             return false;
         }
-
-        var loginProviderInfo = (await _userManager.GetLoginsAsync(user)).FirstOrDefault();
 
         return await _tokenRepository.ValidateTokenAsync(accessToken, user, TokenType.AccessToken);
     }
@@ -227,7 +223,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
     private static string GenerateRandomString(int length = 32)
     {
-        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 
         return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray()]);
     }
@@ -292,10 +288,10 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         await _tokenRepository.SaveChangesAsync();
     }
 
-    public async Task InvalidateAccessAndRefreshTokensAsync(TKey userId)
+    public async Task InvalidateAccessAndRefreshTokensAsync(AppUser<TKey> user)
     {
-        await _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
-        await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
+        await _tokenRepository.RemoveTokenAsync(user, TokenType.AccessToken);
+        await _tokenRepository.RemoveTokenAsync(user, TokenType.RefreshToken);
         await _tokenRepository.SaveChangesAsync();
     }
 
@@ -306,4 +302,5 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
         return result;
     }
+
 }
