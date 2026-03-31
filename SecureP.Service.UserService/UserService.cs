@@ -59,9 +59,9 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
             .ToListAsync();
     }
 
-    public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request)
+    public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByEmailAsync(request.Email, includeUserTokens: true, includeUserLogins: true);
+        var user = await _userRepository.FindByEmailAsync(request.Email, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Email", AppResponseErrors.UserLoginErrors.UserEmailNotFound["email"].ToString()!)
@@ -70,9 +70,9 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         return await CheckPasswordThenReturnUserAsync(user, request.Password);
     }
 
-    public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request)
+    public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByUsernameAsync(request.Username, includeUserTokens: true, includeUserLogins: true);
+        var user = await _userRepository.FindByUsernameAsync(request.Username, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Username", AppResponseErrors.UserLoginErrors.UserUsernameNotFound["username"].ToString()!)
@@ -90,9 +90,9 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         ]);
     }
 
-    public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request)
+    public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByPhoneAsync(request.Phone, includeUserTokens: true, includeUserLogins: true);
+        var user = await _userRepository.FindByPhoneAsync(request.Phone, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null)
         {
@@ -129,7 +129,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         return _userManager.FindByEmailAsync(email);
     }
 
-    public Task<AppUser<TKey>?> GetUserByNameAsync(string username)
+    public Task<AppUser<TKey>?> GetUserByUsernameAsync(string username)
     {
         return _userManager.FindByNameAsync(username);
     }

@@ -19,6 +19,6 @@ public class EmailLoginStrategy<TKey>(IUserService<TKey> userService) : ILoginSt
         {
             Email = request.Email ?? string.Empty,
             Password = request.Password
-        });
+        }, includeUserTokens: true, includeUserLogins: true);
     }
 }

@@ -100,7 +100,7 @@ public class ApiControllerTests(TestApplicationFactory factory) : BaseController
         ArgumentNullException.ThrowIfNull(response, nameof(response));
         response.EnsureSuccessStatusCode();
 
-        TokenResponse? tokenResponseObject = await response.Content.ReadFromJsonAsync<TokenResponse>();
+        TokenResponseDto? tokenResponseObject = await response.Content.ReadFromJsonAsync<TokenResponseDto>();
 
         ArgumentNullException.ThrowIfNull(tokenResponseObject, nameof(tokenResponseObject));
 

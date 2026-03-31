@@ -7,11 +7,11 @@ namespace SecureP.Service.Abstraction;
 
 public interface IUserService<TKey> where TKey : IEquatable<TKey>
 {
-    Task<AppUser<TKey>?> GetUserByIdAsync(TKey id);
     Task<List<string>> GetUserPermissionsAsync(TKey id);
     Task<List<string>> GetUserRolesAsync(TKey id);
+    Task<AppUser<TKey>?> GetUserByIdAsync(TKey id);
     Task<AppUser<TKey>?> GetUserByEmailAsync(string email);
-    Task<AppUser<TKey>?> GetUserByNameAsync(string username);
+    Task<AppUser<TKey>?> GetUserByUsernameAsync(string username);
     Task<IEnumerable<AppUser<TKey>>> GetUsersAsync();
     /// <summary>
     /// Register a new user with the provided registration details
@@ -19,9 +19,9 @@ public interface IUserService<TKey> where TKey : IEquatable<TKey>
     /// <param name="request"></param>
     /// <returns></returns>
     Task<Result<AppUser<TKey>>> RegisterAsync(RegisterRequest request);
-    Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request);
-    Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request);
-    Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request);
+    Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false);
+    Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false);
+    Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false);
     Task<bool> ConfirmEmailAsync(ConfirmEmailRequest request);
     Task ResendConfirmationEmailAsync(string email);
     Task<bool> UpdateUserAsync(AppUser<TKey> user);

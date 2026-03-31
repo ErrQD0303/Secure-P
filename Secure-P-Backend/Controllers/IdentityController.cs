@@ -291,7 +291,7 @@ public class IdentityController : ControllerBase
         //     Domain = "localhost" // Ensure this matches the domain used when setting the cookie
         // });
 
-        var tokens = await SetAccessCookies(request, user, Response, _tokenService, _jwtConfigures);
+        var tokens = await SetAccessCookies(user, Request, Response, _tokenService, _jwtConfigures);
         _logger.LogInformation("User with email: {email} logged in successfully with OTP", request.Email);
 
         return Ok(new LoginResponse<string>
@@ -305,10 +305,10 @@ public class IdentityController : ControllerBase
     }
 
     [NonAction]
-    public async Task<TokenResponse> SetAccessCookies(dynamic? requestData, AppUser<string> user, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
+    public static async Task<TokenResponseDto> SetAccessCookies(AppUser<string> user, HttpRequest request, HttpResponse Response, ITokenService<string> tokenService, JwtConfigures jwtConfigures)
     {
         var (accessToken, refreshToken) = await tokenService.GenerateAccessAndRefreshTokensAsync(user);
-        var tokenResponse = new TokenResponse
+        var tokenResponse = new TokenResponseDto
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
@@ -322,7 +322,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.ExpirySeconds),
             Path = "/",
-            Domain = Request.Host.Host
+            Domain = request.Host.Host
         });
 
         Response.Cookies.Append("refresh_token", tokenResponse.RefreshToken, new CookieOptions
@@ -332,7 +332,7 @@ public class IdentityController : ControllerBase
             SameSite = SameSiteMode.None, // Adjusted for frontend compatibility // Set to Strict for production
             Expires = DateTime.UtcNow.AddSeconds(jwtConfigures.RefreshExpirySeconds),
             Path = "/",
-            Domain = Request.Host.Host
+            Domain = request.Host.Host
         });
 
         return tokenResponse;

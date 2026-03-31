@@ -9,7 +9,7 @@ public interface ITokenRepository<TKey> where TKey : IEquatable<TKey>
     Task<bool> RemoveTokenAsync(string token, TKey userId, TokenType tokenType, string loginProvider);
     Task RemoveTokenAsync(TKey userId, TokenType tokenType);
     Task RemoveTokenAsync(AppUser<TKey> user, TokenType tokenType);
-    Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType);
+    Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType, bool includeUserLogins = false, bool includeUserTokens = false, bool includeUserRoles = false);
     Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken);
     Task<bool> SaveChangesAsync();
 }

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace SecureP.Service.Abstraction.Entities;
 
-public class TokenResponse
+public class TokenResponseDto
 {
     [JsonPropertyName("access_token")]
     public string AccessToken { get; set; } = null!;

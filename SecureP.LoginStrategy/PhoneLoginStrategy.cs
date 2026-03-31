@@ -19,6 +19,6 @@ public class PhoneLoginStrategy<TKey>(IUserService<TKey> userService) : ILoginSt
         {
             Phone = request.Phone ?? string.Empty,
             Password = request.Password
-        });
+        }, includeUserTokens: true, includeUserLogins: true);
     }
 }

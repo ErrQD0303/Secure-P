@@ -210,13 +210,16 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         return await _tokenRepository.ValidateTokenAsync(accessToken, user, TokenType.AccessToken);
     }
 
-    public async Task<(bool isValid, AppUser<TKey>? appUser)> ValidateRefreshTokenAsync(RefreshTokenRequest request)
+    public async Task<Result<AppUser<TKey>>> ValidateRefreshTokenAsync(RefreshTokenRequest request)
     {
-        _logger.LogInformation("Validating Refresh Token");
+        var appUser = await _tokenRepository.GetUserByTokenAsync(request?.RefreshToken!, TokenType.RefreshToken, includeUserRoles: true, includeUserTokens: true, includeUserLogins: true);
 
-        var appUser = await _tokenRepository.GetUserByTokenAsync(request?.RefreshToken!, TokenType.RefreshToken);
+        if (appUser == null)
+        {
+            return Result<AppUser<TKey>>.Failure([new Error(AppResponseErrors.RefreshTokenErrors.InvalidRefreshToken.First().Key, AppResponseErrors.RefreshTokenErrors.InvalidRefreshToken.First().Value.ToString()!)]);
+        }
 
-        return (appUser != null, appUser);
+        return Result<AppUser<TKey>>.Success(appUser);
     }
 
     private static readonly Random random = new();

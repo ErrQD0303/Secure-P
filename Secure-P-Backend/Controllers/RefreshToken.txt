@@ -1,0 +1,79 @@
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@__ToString_0='?' (Size = 128), @__token_1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [a].[Id], [a].[AccessFailedCount], [a].[AddressLine1], [a].[AddressLine2], [a].[Avatar], [a].[City], [a].[ConcurrencyStamp], [a].[Country], [a].[DayOfBirth], [a].[Email], [a].[EmailConfirmed], [a].[FullName], [a].[LockoutEnabled], [a].[LockoutEnd], [a].[NormalizedEmail], [a].[NormalizedUserName], [a].[PasswordHash], [a].[PhoneNumber], [a].[PhoneNumberConfirmed], [a].[PostCode], [a].[SecurityStamp], [a].[TwoFactorEnabled], [a].[UserName]
+      FROM [Identity].[AspNetUsers] AS [a]
+      WHERE EXISTS (
+          SELECT 1
+          FROM [Identity].[AspNetUserTokens] AS [a0]
+          WHERE [a].[Id] = [a0].[UserId] AND [a0].[Name] = @__ToString_0 AND [a0].[Value] = @__token_1)
+      ORDER BY [a].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (5ms) [Parameters=[@__ToString_0='?' (Size = 128), @__token_1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SELECT [a1].[LoginProvider], [a1].[ProviderKey], [a1].[ProviderDisplayName], [a1].[UserId], [a6].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE EXISTS (
+              SELECT 1
+              FROM [Identity].[AspNetUserTokens] AS [a0]
+              WHERE [a].[Id] = [a0].[UserId] AND [a0].[Name] = @__ToString_0 AND [a0].[Value] = @__token_1)
+      ) AS [a6]
+      INNER JOIN [Identity].[AspNetUserLogins] AS [a1] ON [a6].[Id] = [a1].[UserId]
+      ORDER BY [a6].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__ToString_0='?' (Size = 128), @__token_1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SELECT [a2].[UserId], [a2].[LoginProvider], [a2].[Name], [a2].[ExpiryDate], [a2].[Value], [a7].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE EXISTS (
+              SELECT 1
+              FROM [Identity].[AspNetUserTokens] AS [a0]
+              WHERE [a].[Id] = [a0].[UserId] AND [a0].[Name] = @__ToString_0 AND [a0].[Value] = @__token_1)
+      ) AS [a7]
+      INNER JOIN [Identity].[AspNetUserTokens] AS [a2] ON [a7].[Id] = [a2].[UserId]
+      ORDER BY [a7].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@__ToString_0='?' (Size = 128), @__token_1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SELECT [s].[UserId], [s].[RoleId], [s].[Id], [s].[ConcurrencyStamp], [s].[Name], [s].[NormalizedName], [a8].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE EXISTS (
+              SELECT 1
+              FROM [Identity].[AspNetUserTokens] AS [a0]
+              WHERE [a].[Id] = [a0].[UserId] AND [a0].[Name] = @__ToString_0 AND [a0].[Value] = @__token_1)
+      ) AS [a8]
+      INNER JOIN (
+          SELECT [a3].[UserId], [a3].[RoleId], [a4].[Id], [a4].[ConcurrencyStamp], [a4].[Name], [a4].[NormalizedName]
+          FROM [Identity].[AspNetUserRoles] AS [a3]
+          INNER JOIN [Identity].[AspNetRoles] AS [a4] ON [a3].[RoleId] = [a4].[Id]
+      ) AS [s] ON [a8].[Id] = [s].[UserId]
+      ORDER BY [a8].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[@__ToString_0='?' (Size = 128), @__token_1='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SELECT [a5].[Id], [a5].[ClaimType], [a5].[ClaimValue], [a5].[RoleId], [a8].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+      FROM (
+          SELECT TOP(1) [a].[Id]
+          FROM [Identity].[AspNetUsers] AS [a]
+          WHERE EXISTS (
+              SELECT 1
+              FROM [Identity].[AspNetUserTokens] AS [a0]
+              WHERE [a].[Id] = [a0].[UserId] AND [a0].[Name] = @__ToString_0 AND [a0].[Value] = @__token_1)
+      ) AS [a8]
+      INNER JOIN (
+          SELECT [a3].[UserId], [a3].[RoleId], [a4].[Id]
+          FROM [Identity].[AspNetUserRoles] AS [a3]
+          INNER JOIN [Identity].[AspNetRoles] AS [a4] ON [a3].[RoleId] = [a4].[Id]
+      ) AS [s] ON [a8].[Id] = [s].[UserId]
+      INNER JOIN [Identity].[AspNetRoleClaims] AS [a5] ON [s].[Id] = [a5].[RoleId]
+      ORDER BY [a8].[Id], [s].[UserId], [s].[RoleId], [s].[Id]
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@p2='?' (Size = 128), @p3='?' (Size = 128), @p4='?' (Size = 450), @p0='?' (DbType = DateTime2), @p1='?' (Size = 4000), @p7='?' (Size = 128), @p8='?' (Size = 128), @p9='?' (Size = 450), @p5='?' (DbType = DateTime2), @p6='?' (Size = 4000)], CommandType='Text', CommandTimeout='30']
+      SET NOCOUNT ON;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p0, [Value] = @p1
+      OUTPUT 1
+      WHERE [LoginProvider] = @p2 AND [Name] = @p3 AND [UserId] = @p4;
+      UPDATE [Identity].[AspNetUserTokens] SET [ExpiryDate] = @p5, [Value] = @p6
+      OUTPUT 1
+      WHERE [LoginProvider] = @p7 AND [Name] = @p8 AND [UserId] = @p9;

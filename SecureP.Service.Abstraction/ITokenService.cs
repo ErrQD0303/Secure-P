@@ -12,7 +12,7 @@ public interface ITokenService<TKey> where TKey : IEquatable<TKey>
     Task<string> GenerateRefreshTokenAsync(AppUser<TKey> user);
     Task<(string AccessToken, string RefreshToken)> GenerateAccessAndRefreshTokensAsync(AppUser<TKey> user);
     Task<bool> ValidateAccessTokenAsync(string accessToken, TKey id);  // Validate the actual token
-    Task<(bool isValid, AppUser<TKey>? appUser)> ValidateRefreshTokenAsync(RefreshTokenRequest request);
+    Task<Result<AppUser<TKey>>> ValidateRefreshTokenAsync(RefreshTokenRequest request);
     Task<string> GenerateOTPAsync(AppUser<TKey> user);
     Task<Result<AppUser<TKey>>> ValidateOTPAsync(string email, string otp);
     Task InvalidateRefreshTokenAsync(TKey userId);

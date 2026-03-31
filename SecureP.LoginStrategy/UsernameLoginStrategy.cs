@@ -19,6 +19,6 @@ public class UsernameLoginStrategy<TKey>(IUserService<TKey> userService) : ILogi
         {
             Username = request.Username ?? string.Empty,
             Password = request.Password
-        });
+        }, includeUserTokens: true, includeUserLogins: true);
     }
 }

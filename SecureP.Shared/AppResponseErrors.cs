@@ -134,4 +134,20 @@ public class AppResponseErrors
             {"summary", "Request body cannot be empty"}
         };
     }
+
+    public class GenerateTokenErrors
+    {
+        public static Dictionary<string, object> MissingCredentials => new()
+        {
+            {"summary", "Missing credentials." }
+        };
+    }
+
+    public class RefreshTokenErrors
+    {
+        public static Dictionary<string, object> InvalidRefreshToken => new()
+        {
+            {"summary", "Invalid Refresh Tokens" }
+        };
+    }
 }

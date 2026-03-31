@@ -177,4 +177,16 @@ public class AppResponses
         public static string NoParkingZonesFound => "No parking zones found";
         public static string ParkingZonesFound => "Parking zones retrieved successfully.";
     }
+
+    public class GenerateTokenResponses
+    {
+        public const string InvalidEmailOrPassword = "Invalid Email or Password.";
+        public const string InvalidUsernameOrPassword = "Invalid Username or Password.";
+        public const string TokensGeneratedSuccessfully = "Tokens generated successfully";
+        public const string MissingCredentials = "Missing credentials.";
+    }
+    public class RefreshTokenResponses
+    {
+        public const string InvalidRefreshToken = "Invalid Refresh Token";
+    }
 }

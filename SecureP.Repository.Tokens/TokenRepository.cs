@@ -105,9 +105,28 @@ public class TokenRepository<TKey>(UserManager<AppUser<TKey>> userManager, AppDb
             t.UserId.Equals(user.Id));
     }
 
-    public async Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType)
+    public Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType, bool includeUserLogins = false, bool includeUserTokens = false, bool includeUserRoles = false)
     {
-        return await _userManager.Users.Where(u => u.UserTokens.Any(t => t.Name == tokenType.ToString() && t.Value == token)).FirstOrDefaultAsync();
+        var query = _userManager.Users.AsQueryable().AsSplitQuery();
+
+        if (includeUserLogins)
+        {
+            query = query.Include(u => u.UserLogins);
+        }
+
+        if (includeUserTokens)
+        {
+            query = query.Include(u => u.UserTokens);
+        }
+
+        if (includeUserRoles)
+        {
+            query = query.Include(u => u.UserRoles)
+                .ThenInclude(ur => ur.Role)
+                    .ThenInclude(r => r.RoleClaims);
+        }
+
+        return query.FirstOrDefaultAsync(u => u.UserTokens.Any(t => t.Name == tokenType.ToString() && t.Value == token));
     }
 
     public async Task RemoveTokenAsync(TKey userId, TokenType tokenType)
