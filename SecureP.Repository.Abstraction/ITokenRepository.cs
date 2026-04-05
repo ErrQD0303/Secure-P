@@ -11,7 +11,6 @@ public interface ITokenRepository<TKey> where TKey : IEquatable<TKey>
     Task RemoveTokenAsync(AppUser<TKey> user, TokenType tokenType);
     Task<AppUser<TKey>?> GetUserByTokenAsync(string token, TokenType tokenType, bool includeUserLogins = false, bool includeUserTokens = false, bool includeUserRoles = false);
     Task RemoveUserTokenAsync(AppUser<TKey> user, AppUserToken<TKey> existingToken);
-    Task<bool> SaveChangesAsync();
 }
 
 public enum TokenType

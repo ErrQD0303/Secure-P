@@ -36,3 +36,4 @@ global using SecureP.Service.ParkingZoneService.Extensions;
 global using SecureP.EmailQueue.Extensions;
 global using SecureP.LoginStrategy.Extensions;
 global using SecureP.LoginStrategy.Abstraction;
+global using SecureP.UnitOfWork.Extensions;

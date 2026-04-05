@@ -26,7 +26,9 @@ public class DbStorageHostingStartup : IHostingStartup
             services.AddEmailBackgroundWorker();
             services.AddUploadService<string>();
             services.AddParkingRateService<string>(); // Add parking rate service
-            services.AddParkingZoneService<string>(); // Add parking zone service
+            services.AddParkingZoneService<string>(); // Add parking zone service\
+
+            services.AddUnitOfWork<string>(); // Add Unit of Work
         });
     }
 }

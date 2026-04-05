@@ -39,6 +39,7 @@
     <ProjectReference Include="..\SecureP.Cache.RedisCacheManager\SecureP.Cache.RedisCacheManager.csproj" />
     <ProjectReference Include="..\SecureP.EmailQueue\SecureP.EmailQueue.csproj" />
     <ProjectReference Include="..\SecureP.LoginStrategy\SecureP.LoginStrategy.csproj" />
+    <ProjectReference Include="..\SecureP.UnitOfWork\SecureP.UnitOfWork.csproj" />
   </ItemGroup>
 
 </Project>

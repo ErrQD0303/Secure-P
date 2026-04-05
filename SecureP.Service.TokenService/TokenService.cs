@@ -16,6 +16,7 @@ using SecureP.Service.Abstraction.Exceptions;
 using SecureP.Service.Abstraction.Results;
 using SecureP.Shared;
 using SecureP.Shared.Configures;
+using SecureP.UnitOfWork.Abstraction;
 
 namespace SecureP.Service.TokenService;
 
@@ -28,8 +29,9 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
     private readonly RoleManager<AppRole<TKey>> _roleManager;
     private readonly IConfiguration _configuration;
     private readonly JwtConfigures _jwtConfigures;
+    private readonly IUnitOfWork<TKey> _unitOfWork;
 
-    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration, IOptions<JwtConfigures> jwtConfigures, RoleManager<AppRole<TKey>> roleManager, IUserRepository<TKey> userRepository)
+    public TokenService(ITokenRepository<TKey> tokenRepository, ILogger<TokenService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IConfiguration configuration, IOptions<JwtConfigures> jwtConfigures, RoleManager<AppRole<TKey>> roleManager, IUserRepository<TKey> userRepository, IUnitOfWork<TKey> unitOfWork)
     {
         _tokenRepository = tokenRepository;
         _logger = logger;
@@ -38,6 +40,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
         _jwtConfigures = jwtConfigures.Value;
         _roleManager = roleManager;
         _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<string> GenerateAccessTokenAsync(TokenRequest tokenRequest)
@@ -237,7 +240,7 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
 
         await _tokenRepository.AddTokenAsync(otp, user, TokenType.OTP, DateTime.Now.AddMinutes(AppConstants.OTPConstant.ExpiryMinute));
 
-        await _tokenRepository.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         return otp;
     }
@@ -282,26 +285,36 @@ public class TokenService<TKey> : ITokenService<TKey> where TKey : IEquatable<TK
     public async Task InvalidateRefreshTokenAsync(TKey userId)
     {
         await _tokenRepository.RemoveTokenAsync(userId, TokenType.RefreshToken);
-        await _tokenRepository.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
     }
 
     public async Task InvalidateAccessTokenAsync(TKey userId)
     {
         await _tokenRepository.RemoveTokenAsync(userId, TokenType.AccessToken);
-        await _tokenRepository.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
     }
 
     public async Task InvalidateAccessAndRefreshTokensAsync(AppUser<TKey> user)
     {
-        await _tokenRepository.RemoveTokenAsync(user, TokenType.AccessToken);
-        await _tokenRepository.RemoveTokenAsync(user, TokenType.RefreshToken);
-        await _tokenRepository.SaveChangesAsync();
+        try
+        {
+            await _unitOfWork.BeginTransactionAsync();
+            await _unitOfWork.Tokens.RemoveTokenAsync(user, TokenType.AccessToken);
+            await _unitOfWork.Tokens.RemoveTokenAsync(user, TokenType.RefreshToken);
+            await _unitOfWork.CommitAsync();
+            _logger.LogInformation("Tokens invalidated for user {UserId}", user.Id);
+        }
+        catch (Exception ex)
+        {
+            // No need to rollback because if there is an error, the transaction has been automatically rolled back by the unit of work implementation
+            _logger.LogError(ex, "Error invalidating tokens for user {UserId}", user.Id);
+        }
     }
 
     public async Task<(string AccessToken, string RefreshToken)> GenerateAccessAndRefreshTokensAsync(AppUser<TKey> user)
     {
         var result = (await GenerateAccessTokenAsync(user), await GenerateRefreshTokenAsync(user));
-        await _tokenRepository.SaveChangesAsync();
+        await _unitOfWork.CommitAsync();
 
         return result;
     }

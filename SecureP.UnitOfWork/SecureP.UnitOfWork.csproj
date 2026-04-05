@@ -1,12 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SecureP.Identity.Models\SecureP.Identity.Models.csproj" />
     <ProjectReference Include="..\SecureP.UnitOfWork.Abstraction\SecureP.UnitOfWork.Abstraction.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.3" />
+    <ProjectReference Include="..\SecureP.Data\SecureP.Data.csproj" />
+    <ProjectReference Include="..\SecureP.Repository.UserRepository\SecureP.Repository.UserRepository.csproj" />
+    <ProjectReference Include="..\SecureP.Repository.Tokens\SecureP.Repository.Tokens.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

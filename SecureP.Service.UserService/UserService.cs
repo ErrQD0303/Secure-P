@@ -20,6 +20,7 @@ using SecureP.Shared;
 using SecureP.Shared.Configures;
 using SecureP.Shared.Helpers;
 using SecureP.Shared.Mappers;
+using SecureP.UnitOfWork.Abstraction;
 
 namespace SecureP.Service.UserService;
 
@@ -31,9 +32,10 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
     private readonly JwtConfigures _jwtConfigures;
     private readonly IEmailTaskQueue _emailTaskQueue;
     private readonly RoleManager<AppRole<TKey>> _roleManager;
-    private readonly IUserRepository<TKey> _userRepository;
 
-    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailTaskQueue emailTaskQueue, RoleManager<AppRole<TKey>> roleManager, IUserRepository<TKey> userRepository)
+    private IUnitOfWork<TKey> _unitOfWork { get; init; }
+
+    public UserService(ILogger<UserService<TKey>> logger, UserManager<AppUser<TKey>> userManager, IPasswordValidator<AppUser<TKey>> passwordValidator, IOptions<JwtConfigures> jwtConfiguresOptions, IEmailTaskQueue emailTaskQueue, RoleManager<AppRole<TKey>> roleManager, IUnitOfWork<TKey> unitOfWork)
     {
         _logger = logger;
         _userManager = userManager;
@@ -41,12 +43,12 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
         _jwtConfigures = jwtConfiguresOptions.Value;
         _emailTaskQueue = emailTaskQueue;
         _roleManager = roleManager;
-        _userRepository = userRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public Task<AppUser<TKey>?> GetUserByIdAsync(TKey id)
     {
-        return _userRepository.FindByIdAsync(id, includeUserTokens: true);
+        return _unitOfWork.Users.FindByIdAsync(id, includeUserTokens: true);
     }
 
     public async Task<IEnumerable<AppUser<TKey>>> GetUsersAsync()
@@ -61,7 +63,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByEmailAsync(LoginByEmailRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByEmailAsync(request.Email, includeUserRoles, includeUserTokens, includeUserLogins);
+        var user = await _unitOfWork.Users.FindByEmailAsync(request.Email, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Email", AppResponseErrors.UserLoginErrors.UserEmailNotFound["email"].ToString()!)
@@ -72,7 +74,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByUsernameAsync(LoginByUsernameRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByUsernameAsync(request.Username, includeUserRoles, includeUserTokens, includeUserLogins);
+        var user = await _unitOfWork.Users.FindByUsernameAsync(request.Username, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null) return Result<AppUser<TKey>?>.Failure([
             Error.Validation("Username", AppResponseErrors.UserLoginErrors.UserUsernameNotFound["username"].ToString()!)
@@ -92,7 +94,7 @@ public class UserService<TKey> : IUserService<TKey> where TKey : IEquatable<TKey
 
     public async Task<Result<AppUser<TKey>?>> LoginByPhoneNumberAsync(LoginByPhoneNumberRequest request, bool includeUserTokens = false, bool includeUserRoles = false, bool includeUserLogins = false)
     {
-        var user = await _userRepository.FindByPhoneAsync(request.Phone, includeUserRoles, includeUserTokens, includeUserLogins);
+        var user = await _unitOfWork.Users.FindByPhoneAsync(request.Phone, includeUserRoles, includeUserTokens, includeUserLogins);
 
         if (user == null)
         {
